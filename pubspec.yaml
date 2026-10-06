@@ -1,0 +1,40 @@
+name: park_ease_application
+description: "Park Ease - Smart parking application."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  json_annotation: ^4.12.0
+  http: ^1.2.2
+  provider: ^6.1.1
+  shared_preferences: ^2.3.5
+  cached_network_image: ^3.4.1
+  lottie: ^2.7.0
+  shimmer: ^3.0.0
+  flutter_svg: ^2.0.7
+  geolocator: ^14.1.1
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.14
+  json_serializable: ^6.9.5
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
