@@ -19,16 +19,43 @@ class ParkingService {
   }
 
   Future<List<ParkingLot>> getNearbyParkingLots(
-      double latitude, double longitude, double radiusKm) async {
+    double latitude,
+    double longitude,
+    double radiusKm, {
+    String? query,
+  }) async {
     final uri = Uri.parse(ApiConfig.baseUrl).replace(
       path: ApiConfig.parkingSearch,
       queryParameters: {
         'lat': '$latitude',
         'lng': '$longitude',
         'radius': '$radiusKm',
+        if (query != null && query.isNotEmpty) 'q': query,
       },
     );
     return _parseLots(await _api.getUri(uri));
+  }
+
+  Future<ParkingSearchResult> searchNearbyParking(
+    double latitude,
+    double longitude,
+    double radiusKm, {
+    String? query,
+  }) async {
+    final uri = Uri.parse(ApiConfig.baseUrl).replace(
+      path: ApiConfig.parkingSearch,
+      queryParameters: {
+        'lat': '$latitude',
+        'lng': '$longitude',
+        'radius': '$radiusKm',
+        if (query != null && query.isNotEmpty) 'q': query,
+      },
+    );
+    final response = await _api.getUri(uri);
+    final warnings = (response['warnings'] as List<dynamic>? ?? const [])
+        .map((warning) => warning as String)
+        .toList();
+    return ParkingSearchResult(lots: _parseLots(response), warnings: warnings);
   }
 
   Future<ParkingLot> getParkingLot(String id) async {
@@ -53,10 +80,9 @@ class ParkingService {
   }
 
   Future<List<ParkingLot>> searchParking(String query) async {
-    final uri = Uri.parse(ApiConfig.baseUrl).replace(
-      path: ApiConfig.parkingSearch,
-      queryParameters: {'q': query},
-    );
+    final uri = Uri.parse(
+      ApiConfig.baseUrl,
+    ).replace(path: ApiConfig.parkingSearch, queryParameters: {'q': query});
     return _parseLots(await _api.getUri(uri));
   }
 
@@ -64,4 +90,11 @@ class ParkingService {
     final response = await _api.get(ApiConfig.parkingSearch);
     return _parseLots(response);
   }
+}
+
+class ParkingSearchResult {
+  final List<ParkingLot> lots;
+  final List<String> warnings;
+
+  const ParkingSearchResult({required this.lots, this.warnings = const []});
 }

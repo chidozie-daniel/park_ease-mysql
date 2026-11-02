@@ -51,6 +51,8 @@ class ParkingLot {
   final ParkingStatus status;
   final String? imageUrl;
   final bool isActive;
+  final bool isBookable;
+  final String source;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -70,6 +72,8 @@ class ParkingLot {
     this.status = ParkingStatus.available,
     this.imageUrl,
     this.isActive = true,
+    this.isBookable = true,
+    this.source = 'app',
     required this.createdAt,
     this.updatedAt,
   });

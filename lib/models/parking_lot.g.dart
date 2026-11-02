@@ -26,7 +26,11 @@ ParkingLot _$ParkingLotFromJson(Map<String, dynamic> json) => ParkingLot(
       ParkingStatus.available,
   imageUrl: json['imageUrl'] as String?,
   isActive: json['isActive'] as bool? ?? true,
-  createdAt: DateTime.parse(json['createdAt'] as String),
+  isBookable: json['isBookable'] as bool? ?? true,
+  source: json['source'] as String? ?? 'app',
+  createdAt: json['createdAt'] == null
+      ? DateTime.fromMillisecondsSinceEpoch(0)
+      : DateTime.parse(json['createdAt'] as String),
   updatedAt: json['updatedAt'] == null
       ? null
       : DateTime.parse(json['updatedAt'] as String),
@@ -49,6 +53,8 @@ Map<String, dynamic> _$ParkingLotToJson(ParkingLot instance) =>
       'status': _$ParkingStatusEnumMap[instance.status]!,
       'imageUrl': instance.imageUrl,
       'isActive': instance.isActive,
+      'isBookable': instance.isBookable,
+      'source': instance.source,
       'createdAt': instance.createdAt.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),
     };

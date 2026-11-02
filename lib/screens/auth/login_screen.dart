@@ -224,6 +224,25 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () =>
+                          Navigator.pushNamed(context, AppRoutes.adminLogin),
+                      icon: const Icon(
+                        Icons.admin_panel_settings_rounded,
+                        size: 18,
+                        color: Color(0xFF126E63),
+                      ),
+                      label: const Text(
+                        'Login as Admin',
+                        style: TextStyle(
+                          color: Color(0xFF126E63),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -29,6 +29,7 @@ class _SearchParkingScreenState extends State<SearchParkingScreen> {
   bool _loading = false;
   bool _hasSearched = false;
   String? _error;
+  String? _warning;
   ll.LatLng? _myLocation;
   final _distance = ll.Distance();
 
@@ -117,7 +118,7 @@ class _SearchParkingScreenState extends State<SearchParkingScreen> {
     FocusScope.of(context).unfocus();
 
     if (_myLocation case final ll.LatLng pos) {
-      _searchNearby(pos.latitude, pos.longitude);
+      _searchNearby(pos.latitude, pos.longitude, query: query);
     } else if (query.isNotEmpty) {
       _searchByText(query);
     } else {
@@ -125,18 +126,29 @@ class _SearchParkingScreenState extends State<SearchParkingScreen> {
     }
   }
 
-  Future<void> _searchNearby(double latitude, double longitude) async {
+  Future<void> _searchNearby(
+    double latitude,
+    double longitude, {
+    String? query,
+  }) async {
     _setLoading(true);
     _error = null;
+    _warning = null;
     try {
-      final lots = await _parking.getNearbyParkingLots(latitude, longitude, 10);
+      final result = await _parking.searchNearbyParking(
+        latitude,
+        longitude,
+        10,
+        query: query,
+      );
       if (!mounted) return;
       setState(() {
-        _results = lots;
+        _results = result.lots;
+        _warning = result.warnings.isEmpty ? null : result.warnings.join('\n');
         _hasSearched = true;
         _loading = false;
       });
-      _fitBounds(lots);
+      _fitBounds(result.lots);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -151,6 +163,7 @@ class _SearchParkingScreenState extends State<SearchParkingScreen> {
   Future<void> _searchByText(String query) async {
     _setLoading(true);
     _error = null;
+    _warning = null;
     try {
       final lots = await _parking.searchParking(query);
       if (!mounted) return;
@@ -174,6 +187,7 @@ class _SearchParkingScreenState extends State<SearchParkingScreen> {
   Future<void> _loadAll() async {
     _setLoading(true);
     _error = null;
+    _warning = null;
     try {
       final lots = await _parking.getAllLots();
       if (!mounted) return;
@@ -211,8 +225,7 @@ class _SearchParkingScreenState extends State<SearchParkingScreen> {
     );
   }
 
-  ll.LatLng _latLng(ParkingLot lot) =>
-      ll.LatLng(lot.latitude, lot.longitude);
+  ll.LatLng _latLng(ParkingLot lot) => ll.LatLng(lot.latitude, lot.longitude);
 
   String _formattedDistance(ParkingLot lot) {
     final me = _myLocation;
@@ -222,6 +235,17 @@ class _SearchParkingScreenState extends State<SearchParkingScreen> {
   }
 
   void _pickLot(ParkingLot lot) {
+    if (!lot.isBookable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'This parking location is mapped by the community. '
+            'Rates, availability, and in-app booking are not provided.',
+          ),
+        ),
+      );
+      return;
+    }
     Navigator.pushNamed(
       context,
       AppRoutes.parkingDetails,
@@ -239,6 +263,7 @@ class _SearchParkingScreenState extends State<SearchParkingScreen> {
           _buildSearchBar(),
           _buildMyLocationButton(),
           _buildResultsSheet(),
+          if (_warning != null) _NoticeBanner(message: _warning!),
           if (_error != null && _results.isEmpty)
             _ErrorBanner(message: _error!),
         ],
@@ -268,7 +293,9 @@ class _SearchParkingScreenState extends State<SearchParkingScreen> {
             child: Icon(
               Icons.local_parking_rounded,
               size: 28,
-              color: lot.status == ParkingStatus.available
+              color: !lot.isBookable
+                  ? Colors.blueGrey
+                  : lot.status == ParkingStatus.available
                   ? const Color(0xFF126E63)
                   : Colors.redAccent,
             ),
@@ -287,15 +314,12 @@ class _SearchParkingScreenState extends State<SearchParkingScreen> {
       ),
       children: [
         TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          urlTemplate: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.example.park_ease_application',
         ),
         RichAttributionWidget(
           alignment: AttributionAlignment.bottomRight,
-          attributions: [
-            TextSourceAttribution(
-              '© OpenStreetMap contributors',
-            ),
-          ],
+          attributions: [TextSourceAttribution('© OpenStreetMap contributors')],
         ),
         MarkerLayer(markers: markers),
       ],
@@ -307,45 +331,65 @@ class _SearchParkingScreenState extends State<SearchParkingScreen> {
       top: MediaQuery.of(context).padding.top + 16,
       left: 16,
       right: 16,
-      child: Material(
-        elevation: 4,
-        borderRadius: BorderRadius.circular(12),
-        child: TextField(
-          controller: _controller,
-          textInputAction: TextInputAction.search,
-          onSubmitted: (_) => _search(),
-          decoration: InputDecoration(
-            fillColor: Colors.white,
-            filled: true,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _accent),
+      child: Row(
+        children: [
+          Material(
+            color: Colors.white,
+            elevation: 4,
+            borderRadius: BorderRadius.circular(12),
+            child: IconButton(
+              tooltip: 'Back to dashboard',
+              onPressed: () => Navigator.maybePop(context),
+              icon: const Icon(Icons.arrow_back_rounded, color: _accent),
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _accent),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _accent, width: 2),
-            ),
-            prefixIcon:
-                const Icon(Icons.search_rounded, color: _accent, size: 22),
-            suffixIcon: _loading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: _accent,
-                      strokeWidth: 2.5,
-                    ),
-                  )
-                : null,
-            hintText: 'Search location',
-            hintStyle: const TextStyle(color: _accent, fontSize: 14),
-            contentPadding: const EdgeInsets.symmetric(vertical: 14),
           ),
-        ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Material(
+              elevation: 4,
+              borderRadius: BorderRadius.circular(12),
+              child: TextField(
+                controller: _controller,
+                textInputAction: TextInputAction.search,
+                onSubmitted: (_) => _search(),
+                decoration: InputDecoration(
+                  fillColor: Colors.white,
+                  filled: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _accent),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _accent),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _accent, width: 2),
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    color: _accent,
+                    size: 22,
+                  ),
+                  suffixIcon: _loading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: _accent,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : null,
+                  hintText: 'Search location',
+                  hintStyle: const TextStyle(color: _accent, fontSize: 14),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -465,10 +509,35 @@ class _ErrorBanner extends StatelessWidget {
           color: Colors.red[50],
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Text(
-              message,
-              style: TextStyle(color: Colors.red[900]),
-            ),
+            child: Text(message, style: TextStyle(color: Colors.red[900])),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NoticeBanner extends StatelessWidget {
+  final String message;
+  const _NoticeBanner({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top + 76,
+          left: 16,
+          right: 16,
+        ),
+        child: Material(
+          elevation: 4,
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.amber[50],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Text(message, style: TextStyle(color: Colors.amber[900])),
           ),
         ),
       ),
@@ -504,6 +573,19 @@ class _LotCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (!lot.isBookable)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    'OPENSTREETMAP',
+                    style: TextStyle(
+                      color: Colors.blueGrey,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
               Row(
                 children: [
                   Expanded(
@@ -521,8 +603,10 @@ class _LotCard extends StatelessWidget {
                   if (distance.isNotEmpty)
                     Text(
                       distance,
-                      style:
-                          const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                      style: const TextStyle(
+                        color: Color(0xFF6B7280),
+                        fontSize: 13,
+                      ),
                     ),
                 ],
               ),
@@ -539,15 +623,21 @@ class _LotCard extends StatelessWidget {
                   Icon(
                     Icons.local_parking_rounded,
                     size: 16,
-                    color: lot.availableSlots > 0
+                    color: !lot.isBookable
+                        ? Colors.blueGrey
+                        : lot.availableSlots > 0
                         ? const Color(0xFF126E63)
                         : Colors.redAccent,
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    '${lot.availableSlots} of ${lot.totalSlots} spots',
+                    lot.isBookable
+                        ? '${lot.availableSlots} of ${lot.totalSlots} spots'
+                        : 'Availability not listed',
                     style: TextStyle(
-                      color: lot.availableSlots > 0
+                      color: !lot.isBookable
+                          ? Colors.blueGrey
+                          : lot.availableSlots > 0
                           ? const Color(0xFF126E63)
                           : Colors.redAccent,
                       fontSize: 13,
@@ -556,7 +646,9 @@ class _LotCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    '${AppHelpers.formatPrice(lot.hourlyRate)}/hr',
+                    lot.isBookable
+                        ? '${AppHelpers.formatPrice(lot.hourlyRate)}/hr'
+                        : 'Rate not listed',
                     style: const TextStyle(
                       color: Colors.black,
                       fontSize: 14,
