@@ -1,252 +1,246 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-class ParkingDetailsScreen extends StatelessWidget {
+import '../../app/routes.dart';
+import '../../models/parking_lot.dart';
+import '../../services/api_service.dart';
+import '../../services/parking_service.dart';
+import '../../utils/utils.dart';
+import '../../widgets/loading_indicator.dart';
+
+class ParkingDetailsScreen extends StatefulWidget {
   final String parkingLotId;
 
   const ParkingDetailsScreen({super.key, required this.parkingLotId});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 250,
-            pinned: true,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.share_rounded, color: Colors.white),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon: const Icon(Icons.favorite_border_rounded, color: Colors.white),
-                onPressed: () {},
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: SweepGradient(
-                    colors: [
-                      Color(0xFFDEDCEC),
-                      Color(0xFFF3F3F7),
-                      Color(0xFFC8C7DF),
-                    ],
-                  ),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.local_parking_rounded,
-                    size: 80,
-                    color: Color(0xFF126E63),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                spacing: 16,
-                children: [
-                  Row(
-                    spacing: 8,
-                    children: [
-                      const Text(
-                        'City Center Parking',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF126E63).withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          'Open',
-                          style: TextStyle(
-                            color: Color(0xFF126E63),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    spacing: 8,
-                    children: [
-                      const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF6B7280)),
-                      const Expanded(
-                        child: Text(
-                          '123 Main Street, Downtown, City',
-                          style: TextStyle(
-                            color: Color(0xFF6B7280),
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    spacing: 8,
-                    children: [
-                      const Icon(Icons.access_time_outlined, size: 16, color: Color(0xFF6B7280)),
-                      const Expanded(
-                        child: Text(
-                          'Open 24/7',
-                          style: TextStyle(
-                            color: Color(0xFF6B7280),
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Divider(),
-                  const Row(
-                    spacing: 16,
-                    children: [
-                      _InfoItem(icon: Icons.local_parking_outlined, label: '120 Spots'),
-                      _InfoItem(icon: Icons.electric_meter_outlined, label: 'EV Charging'),
-                      _InfoItem(icon: Icons.accessible_rounded, label: 'Handicap'),
-                    ],
-                  ),
-                  const Divider(),
-                  const Text(
-                    'Pricing',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const Row(
-                    spacing: 8,
-                    children: [
-                      Text(
-                        'Rs 50',
-                        style: TextStyle(
-                          color: Color(0xFF126E63),
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        '/hr',
-                        style: TextStyle(
-                          color: Color(0xFF6B7280),
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Text(
-                    'Daily: Rs 400',
-                    style: TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontSize: 14,
-                    ),
-                  ),
-                  const Divider(),
-                  const Text(
-                    'Amenities',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildAmenity('CCTV'),
-                      _buildAmenity('Guard'),
-                      _buildAmenity('Well Lit'),
-                      _buildAmenity('Gate Access'),
-                      _buildAmenity('Wheelchair'),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pushNamed(context, '/select-slot'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF126E63),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 56),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Select Slot',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAmenity(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F3F7),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.black87,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
+  State<ParkingDetailsScreen> createState() => _ParkingDetailsScreenState();
 }
 
-class _InfoItem extends StatelessWidget {
-  final IconData? icon;
-  final String label;
+class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
+  final _parking = ParkingService();
+  late Future<ParkingLot> _lot;
+  bool _isFavorite = false;
 
-  const _InfoItem({this.icon, required this.label});
+  @override
+  void initState() {
+    super.initState();
+    _lot = _parking.getParkingLot(widget.parkingLotId);
+  }
+
+  Future<void> _retry() async {
+    final request = _parking.getParkingLot(widget.parkingLotId);
+    setState(() => _lot = request);
+  }
+
+  Future<void> _share(ParkingLot lot) async {
+    await Clipboard.setData(ClipboardData(text: '${lot.name}\n${lot.address}'));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Parking details copied to clipboard.')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon ?? Icons.local_parking_outlined, size: 24, color: const Color(0xFF126E63)),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.black54,
-            fontSize: 12,
+    return FutureBuilder<ParkingLot>(
+      future: _lot,
+      builder: (context, snapshot) {
+        return Scaffold(
+          body: snapshot.hasData
+              ? _details(snapshot.data!)
+              : snapshot.hasError
+              ? _error(ApiService.describeError(snapshot.error!))
+              : const Center(child: LoadingIndicator()),
+        );
+      },
+    );
+  }
+
+  Widget _error(String message) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Parking Details')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.cloud_off_rounded, size: 56),
+              const SizedBox(height: 12),
+              Text(message, textAlign: TextAlign.center),
+              TextButton(onPressed: _retry, child: const Text('Try again')),
+            ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _details(ParkingLot lot) {
+    final isOpen = lot.isActive && lot.status != ParkingStatus.closed;
+    final canBook = lot.isBookable && isOpen && lot.availableSlots > 0;
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          expandedHeight: 220,
+          pinned: true,
+          title: Text(lot.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+          actions: [
+            IconButton(
+              tooltip: 'Copy parking details',
+              icon: const Icon(Icons.share_rounded),
+              onPressed: () => _share(lot),
+            ),
+            IconButton(
+              tooltip: _isFavorite ? 'Remove favorite' : 'Add favorite',
+              icon: Icon(
+                _isFavorite ? Icons.favorite : Icons.favorite_border_rounded,
+                color: _isFavorite ? Colors.red : null,
+              ),
+              onPressed: () {
+                setState(() => _isFavorite = !_isFavorite);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      _isFavorite
+                          ? 'Added to favorites for this visit.'
+                          : 'Removed from favorites.',
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+          flexibleSpace: FlexibleSpaceBar(
+            background: Container(
+              decoration: const BoxDecoration(
+                gradient: SweepGradient(
+                  colors: [
+                    Color(0xFFDEDCEC),
+                    Color(0xFFF3F3F7),
+                    Color(0xFFC8C7DF),
+                  ],
+                ),
+              ),
+              child: const Center(
+                child: Icon(
+                  Icons.local_parking_rounded,
+                  size: 80,
+                  color: Color(0xFF126E63),
+                ),
+              ),
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+          sliver: SliverList.list(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      lot.name,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  Chip(
+                    label: Text(isOpen ? lot.status.label : 'Closed'),
+                    backgroundColor: isOpen
+                        ? const Color(0xFF126E63).withValues(alpha: 0.12)
+                        : Colors.red.withValues(alpha: 0.12),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _infoRow(Icons.location_on_outlined, lot.address),
+              const SizedBox(height: 12),
+              _infoRow(
+                Icons.local_parking_outlined,
+                lot.isBookable
+                    ? '${lot.availableSlots} of ${lot.totalSlots} spots available'
+                    : 'Community listing; availability is not provided',
+              ),
+              if (lot.description?.isNotEmpty ?? false) ...[
+                const SizedBox(height: 20),
+                Text(lot.description!),
+              ],
+              const Divider(height: 36),
+              Text(
+                'Pricing',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                lot.isBookable
+                    ? '${AppHelpers.formatPrice(lot.hourlyRate)} per hour'
+                    : 'Rates are not listed for this community location.',
+                style: const TextStyle(
+                  color: Color(0xFF126E63),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (lot.dailyRate != null) ...[
+                const SizedBox(height: 4),
+                Text('Daily rate: ${AppHelpers.formatPrice(lot.dailyRate!)}'),
+              ],
+              if (lot.amenities.isNotEmpty) ...[
+                const Divider(height: 36),
+                Text(
+                  'Amenities',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: lot.amenities
+                      .map((amenity) => Chip(label: Text(amenity)))
+                      .toList(),
+                ),
+              ],
+              const SizedBox(height: 24),
+              if (canBook)
+                ElevatedButton(
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.selectSlot,
+                    arguments: {'parkingLotId': lot.id},
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF126E63),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 56),
+                  ),
+                  child: const Text('Select Slot'),
+                )
+              else
+                const Text(
+                  'This location cannot currently be booked in Park Ease.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.black54),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _infoRow(IconData icon, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: const Color(0xFF6B7280)),
+        const SizedBox(width: 10),
+        Expanded(child: Text(text)),
       ],
     );
   }

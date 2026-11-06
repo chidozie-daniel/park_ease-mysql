@@ -37,7 +37,11 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await auth.login(_emailController.text, _passwordController.text);
       if (mounted) {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.home,
+          (route) => false,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -72,15 +76,18 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Form(
               key: _formKey,
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 children: [
                   const SizedBox(height: 10),
                   Center(
                     child: Image.asset(
                       'assets/images/login image.png',
-                      width: 220,
-                      height: 147,
-                      fit: BoxFit.cover,
+                      width: 200,
+                      height: 140,
+                      fit: BoxFit.contain,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -104,14 +111,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 40),
                   _buildField(
                     label: 'Email Address',
+                    hint: 'you@example.com',
                     controller: _emailController,
                     validator: AppValidators.email,
                     prefixIcon: const Icon(Icons.email_outlined, size: 20),
                     autofillHints: const [AutofillHints.email],
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 20),
                   _buildField(
                     label: 'Password',
+                    hint: 'Enter your password',
                     controller: _passwordController,
                     validator: AppValidators.password,
                     obscureText: _obscurePassword,
@@ -127,13 +138,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           setState(() => _obscurePassword = !_obscurePassword),
                     ),
                     autofillHints: const [AutofillHints.password],
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _login(),
                   ),
                   const SizedBox(height: 12),
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () =>
-                          Navigator.pushNamed(context, AppRoutes.forgotPassword),
+                      onPressed: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.forgotPassword,
+                      ),
                       child: const Text(
                         'Forgot Password?',
                         style: TextStyle(
@@ -149,55 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     isLoading: _isLoading,
                     onPressed: _login,
                   ),
-                  const SizedBox(height: 32),
-                  _buildDivider(),
                   const SizedBox(height: 24),
-                  Row(
-                    spacing: 12,
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _login,
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFE5E7EB)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: const Text(
-                            'Google',
-                            style: TextStyle(
-                              color: Color(0xFF374151),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _login,
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFE5E7EB)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: const Text(
-                            'Apple',
-                            style: TextStyle(
-                              color: Color(0xFF374151),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
                   Row(
                     spacing: 6,
                     children: [
@@ -212,8 +179,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       TextButton(
-                        onPressed: () =>
-                            Navigator.pushReplacementNamed(context, AppRoutes.register),
+                        onPressed: () => Navigator.pushReplacementNamed(
+                          context,
+                          AppRoutes.register,
+                        ),
                         child: const Text(
                           'Register',
                           style: TextStyle(
@@ -254,12 +223,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildField({
     required String label,
+    required String hint,
     required TextEditingController controller,
     required String? Function(String?)? validator,
     bool obscureText = false,
     Widget? prefixIcon,
     Widget? suffixIcon,
     Iterable<String>? autofillHints,
+    TextInputType? keyboardType,
+    TextInputAction? textInputAction,
+    ValueChanged<String>? onFieldSubmitted,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,69 +246,25 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         const SizedBox(height: 6),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFFC8C7D4),
-              width: 1,
-            ),
+        TextFormField(
+          controller: controller,
+          validator: validator,
+          obscureText: obscureText,
+          obscuringCharacter: '•',
+          autofillHints: autofillHints,
+          keyboardType: keyboardType,
+          textInputAction: textInputAction,
+          onFieldSubmitted: onFieldSubmitted,
+          style: const TextStyle(
+            color: Colors.black87,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
           ),
-          child: TextField(
-            controller: controller,
-            obscureText: obscureText,
-            obscuringCharacter: '•',
-            autofillHints: autofillHints,
-            style: const TextStyle(
-              color: Colors.black87,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
-              prefixIcon: prefixIcon,
-              suffixIcon: suffixIcon,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDivider() {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 1,
-                  decoration: const ShapeDecoration(
-                    shape: ContinuousRectangleBorder(
-                      side: BorderSide(color: Color(0xFF9894BE)),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          color: const Color(0xFFF6F5FA),
-          child: const Text(
-            'or continue with',
-            style: TextStyle(
-              color: Color(0xFF9894BE),
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-            ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: Color(0xFF9894BE), fontSize: 14),
+            prefixIcon: prefixIcon,
+            suffixIcon: suffixIcon,
           ),
         ),
       ],

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../models/vehicle.dart';
+import '../../services/api_service.dart';
+import '../../services/vehicle_service.dart';
+import '../../utils/validators.dart';
 import '../../widgets/app_button.dart';
 
 class AddVehicleScreen extends StatefulWidget {
@@ -17,6 +21,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   final _colorController = TextEditingController();
   String _selectedType = 'Car';
   bool _isDefault = false;
+  bool _isSaving = false;
+  String? _error;
+  final _service = VehicleService();
 
   @override
   void dispose() {
@@ -25,6 +32,29 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     _licenseController.dispose();
     _colorController.dispose();
     super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() {
+      _isSaving = true;
+      _error = null;
+    });
+    try {
+      await _service.addVehicle(
+        type: VehicleType.values.byName(_selectedType.toLowerCase()),
+        brand: _brandController.text.trim(),
+        model: _modelController.text.trim(),
+        color: _colorController.text.trim(),
+        licensePlate: _licenseController.text.trim(),
+        isDefault: _isDefault,
+      );
+      if (mounted) Navigator.pop(context, true);
+    } catch (error) {
+      if (mounted) setState(() => _error = ApiService.describeError(error));
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
@@ -44,22 +74,25 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
             child: Form(
               key: _formKey,
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 32,
+                ),
                 children: [
                   const SizedBox(height: 20),
                   Text(
                     'Add New Vehicle',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF111827),
-                        ),
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF111827),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Fill in the details of your vehicle',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF6B7280),
-                        ),
+                      color: const Color(0xFF6B7280),
+                    ),
                   ),
                   const SizedBox(height: 40),
                   const Text(
@@ -85,21 +118,25 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                   _buildField(
                     label: 'Brand',
                     controller: _brandController,
+                    hint: 'e.g. Toyota',
                   ),
                   const SizedBox(height: 20),
                   _buildField(
                     label: 'Model',
                     controller: _modelController,
+                    hint: 'e.g. Camry',
                   ),
                   const SizedBox(height: 20),
                   _buildField(
                     label: 'License Plate',
                     controller: _licenseController,
+                    hint: 'Enter your plate number',
                   ),
                   const SizedBox(height: 20),
                   _buildField(
                     label: 'Color',
                     controller: _colorController,
+                    hint: 'e.g. Black',
                   ),
                   const SizedBox(height: 24),
                   CheckboxListTile(
@@ -110,13 +147,18 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                     controlAffinity: ListTileControlAffinity.leading,
                   ),
                   const SizedBox(height: 40),
+                  if (_error != null) ...[
+                    Text(
+                      _error!,
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   AppButton(
                     label: 'Add Vehicle',
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        Navigator.pop(context);
-                      }
-                    },
+                    isLoading: _isSaving,
+                    onPressed: _save,
                   ),
                 ],
               ),
@@ -130,6 +172,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   Widget _buildField({
     required String label,
     required TextEditingController controller,
+    required String hint,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,21 +190,21 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFFC8C7D4),
-              width: 1,
-            ),
+            border: Border.all(color: const Color(0xFFC8C7D4), width: 1),
           ),
-          child: TextField(
+          child: TextFormField(
             controller: controller,
+            validator: (value) => AppValidators.required(value, label),
+            textInputAction: TextInputAction.next,
             style: const TextStyle(
               color: Colors.black87,
               fontSize: 16,
               fontWeight: FontWeight.w500,
             ),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: const TextStyle(color: Color(0xFF9894BE)),
+              contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 14,
               ),

@@ -1,68 +1,164 @@
 import 'package:flutter/material.dart';
 
-class SelectSlotScreen extends StatelessWidget {
+import '../../app/routes.dart';
+import '../../models/parking_slot.dart';
+import '../../services/api_service.dart';
+import '../../services/parking_service.dart';
+import '../../widgets/loading_indicator.dart';
+
+class SelectSlotScreen extends StatefulWidget {
   final String parkingLotId;
 
   const SelectSlotScreen({super.key, required this.parkingLotId});
 
   @override
+  State<SelectSlotScreen> createState() => _SelectSlotScreenState();
+}
+
+class _SelectSlotScreenState extends State<SelectSlotScreen> {
+  final _parking = ParkingService();
+  late Future<List<ParkingSlot>> _slots;
+
+  @override
+  void initState() {
+    super.initState();
+    _slots = _parking.getParkingSlots(widget.parkingLotId);
+  }
+
+  void _continueWithoutSlot() {
+    Navigator.pushNamed(
+      context,
+      AppRoutes.bookingForm,
+      arguments: {'parkingLotId': widget.parkingLotId},
+    );
+  }
+
+  void _select(ParkingSlot slot) {
+    if (slot.status != SlotStatus.available) return;
+    Navigator.pushNamed(
+      context,
+      AppRoutes.bookingForm,
+      arguments: {
+        'parkingLotId': widget.parkingLotId,
+        'parkingSlotId': slot.id,
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Select Parking Slot'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: const Color(0xFFF3F3F7),
-            child: const Text(
-              'Select a parking slot from the grid below',
-              style: TextStyle(
-                color: Colors.black54,
-                fontSize: 14,
+      appBar: AppBar(title: const Text('Select Parking Slot')),
+      body: FutureBuilder<List<ParkingSlot>>(
+        future: _slots,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: LoadingIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      ApiService.describeError(snapshot.error!),
+                      textAlign: TextAlign.center,
+                    ),
+                    TextButton(
+                      onPressed: () => setState(
+                        () => _slots = _parking.getParkingSlots(
+                          widget.parkingLotId,
+                        ),
+                      ),
+                      child: const Text('Try again'),
+                    ),
+                  ],
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                spacing: 16,
-                children: [
-                  const Row(
-                    spacing: 16,
-                    children: [
-                      _LegendItem(color: Color(0xFF126E63), label: 'Available'),
-                      _LegendItem(color: Colors.red, label: 'Occupied'),
-                      _LegendItem(color: Colors.amber, label: 'Reserved'),
-                    ],
-                  ),
-                  Expanded(
-                    child: Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      alignment: WrapAlignment.center,
-                      children: List.generate(24, (index) {
-                        return _SlotWidget(
-                          slotNumber: 'A${index + 1}',
-                          status: index % 5 == 0 ? 'occupied' : 'available',
-                          onTap: () {},
-                        );
-                      }),
+            );
+          }
+
+          final slots = snapshot.data ?? const <ParkingSlot>[];
+          final available = slots
+              .where((slot) => slot.status == SlotStatus.available)
+              .toList();
+          return Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'Choose an available space, or continue without selecting a specific slot.',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const _Legend(),
+              const SizedBox(height: 12),
+              if (slots.isEmpty)
+                const Expanded(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text(
+                        'No individual spaces are listed for this parking location.',
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-        ],
+                )
+              else
+                Expanded(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(20),
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 92,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 1,
+                        ),
+                    itemCount: slots.length,
+                    itemBuilder: (context, index) {
+                      final slot = slots[index];
+                      return _SlotTile(slot: slot, onTap: () => _select(slot));
+                    },
+                  ),
+                ),
+              if (available.isEmpty || slots.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: _continueWithoutSlot,
+                      child: const Text('Continue without a specific slot'),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
+    );
+  }
+}
+
+class _Legend extends StatelessWidget {
+  const _Legend();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Wrap(
+      spacing: 16,
+      runSpacing: 8,
+      alignment: WrapAlignment.center,
+      children: [
+        _LegendItem(color: Color(0xFF126E63), label: 'Available'),
+        _LegendItem(color: Colors.red, label: 'Occupied'),
+        _LegendItem(color: Colors.amber, label: 'Reserved'),
+        _LegendItem(color: Colors.grey, label: 'Maintenance'),
+      ],
     );
   }
 }
@@ -76,52 +172,69 @@ class _LegendItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      spacing: 6,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           width: 14,
           height: 14,
           decoration: BoxDecoration(
-            color: color,
+            color: color.withValues(alpha: 0.18),
+            border: Border.all(color: color),
             borderRadius: BorderRadius.circular(4),
           ),
         ),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.black54,
-            fontSize: 12,
-          ),
-        ),
+        const SizedBox(width: 6),
+        Text(label, style: const TextStyle(fontSize: 12)),
       ],
     );
   }
 }
 
-class _SlotWidget extends StatelessWidget {
-  final String slotNumber;
-  final String status;
+class _SlotTile extends StatelessWidget {
+  final ParkingSlot slot;
   final VoidCallback onTap;
 
-  const _SlotWidget({
-    required this.slotNumber,
-    required this.status,
-    required this.onTap,
-  });
+  const _SlotTile({required this.slot, required this.onTap});
 
-  Color get _color {
-    switch (status) {
-      case 'occupied':
-        return Colors.red;
-      case 'reserved':
-        return Colors.amber;
-      default:
-        return const Color(0xFF126E63);
-    }
-  }
+  Color get _color => switch (slot.status) {
+    SlotStatus.available => const Color(0xFF126E63),
+    SlotStatus.occupied => Colors.red,
+    SlotStatus.reserved => Colors.amber,
+    SlotStatus.maintenance => Colors.grey,
+  };
 
   @override
   Widget build(BuildContext context) {
-    return Container(width: 50, height: 50, decoration: BoxDecoration(color: _color.withValues(alpha: 0.15), border: Border.all(color: _color, width: 2), borderRadius: BorderRadius.circular(8)), child: Center(child: Text(slotNumber, style: TextStyle(color: _color, fontSize: 12, fontWeight: FontWeight.w700))));
+    final isAvailable = slot.status == SlotStatus.available;
+    return InkWell(
+      onTap: isAvailable ? onTap : null,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: _color.withValues(alpha: 0.12),
+          border: Border.all(color: _color, width: 1.5),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                slot.slotNumber,
+                style: TextStyle(
+                  color: _color,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                slot.status.label,
+                style: TextStyle(color: _color, fontSize: 9),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

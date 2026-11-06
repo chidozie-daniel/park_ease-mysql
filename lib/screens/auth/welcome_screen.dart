@@ -109,7 +109,7 @@ class WelcomeScreen extends StatelessWidget {
                         onTap: () {
                           Navigator.pushReplacementNamed(
                             context,
-                            AppRoutes.home,
+                            AppRoutes.login,
                           );
                         },
                         child: Text(

@@ -14,6 +14,7 @@ import '../screens/user/parking_details_screen.dart';
 import '../screens/user/select_slot_screen.dart';
 import '../screens/user/navigate_parking_screen.dart';
 import '../screens/user/booking_confirmation_screen.dart';
+import '../screens/user/booking_form_screen.dart';
 import '../screens/user/booking_details_screen.dart';
 import '../screens/user/my_bookings_screen.dart';
 import '../screens/user/current_parking_screen.dart';
@@ -49,6 +50,7 @@ abstract final class AppRoutes {
   static const parkingResults = '/parking-results';
   static const parkingDetails = '/parking-details';
   static const selectSlot = '/select-slot';
+  static const bookingForm = '/booking-form';
   static const navigateParking = '/navigate-parking';
   static const bookingConfirmation = '/booking-confirmation';
   static const bookingDetails = '/booking-details';
@@ -115,6 +117,12 @@ abstract final class AppRoutes {
         final args = settings.arguments as Map<String, dynamic>?;
         return _route(SelectSlotScreen(
           parkingLotId: args?['parkingLotId'] ?? '',
+        ));
+      case bookingForm:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _route(BookingFormScreen(
+          parkingLotId: args?['parkingLotId'] ?? '',
+          parkingSlotId: args?['parkingSlotId'],
         ));
       case navigateParking:
         final args = settings.arguments as Map<String, dynamic>?;

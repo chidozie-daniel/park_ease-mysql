@@ -1,105 +1,179 @@
 import 'package:flutter/material.dart';
 
-class ManageParkingLotsScreen extends StatelessWidget {
+import '../../app/routes.dart';
+import '../../models/parking_lot.dart';
+import '../../services/admin_service.dart';
+import '../../services/api_service.dart';
+import '../../widgets/loading_indicator.dart';
+
+class ManageParkingLotsScreen extends StatefulWidget {
   const ManageParkingLotsScreen({super.key});
+
+  @override
+  State<ManageParkingLotsScreen> createState() =>
+      _ManageParkingLotsScreenState();
+}
+
+class _ManageParkingLotsScreenState extends State<ManageParkingLotsScreen> {
+  final _service = AdminService();
+  late Future<List<ParkingLot>> _lots;
+
+  @override
+  void initState() {
+    super.initState();
+    _lots = _service.getParkingLots();
+  }
+
+  Future<void> _refresh() async {
+    final request = _service.getParkingLots();
+    setState(() => _lots = request);
+    await request;
+  }
+
+  Future<void> _edit([ParkingLot? lot]) async {
+    final changed = await Navigator.pushNamed(
+      context,
+      AppRoutes.addEditParkingLot,
+      arguments: {'parkingLotId': lot?.id},
+    );
+    if (changed == true && mounted) await _refresh();
+  }
+
+  Future<void> _delete(ParkingLot lot) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete parking lot?'),
+        content: Text('Delete "${lot.name}" and its parking spaces?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Keep'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await _service.deleteParkingLot(lot.id);
+      if (mounted) await _refresh();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(ApiService.describeError(error))));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manage Parking Lots'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
         actions: [
           IconButton(
+            tooltip: 'Add parking lot',
             icon: const Icon(Icons.add_rounded),
-            onPressed: () => Navigator.pushNamed(context, '/add-edit-parking-lot'),
+            onPressed: () => _edit(),
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildLotCard(context, 'City Center Parking', '120 Spots', 'Rs 50/hr', true),
-          const SizedBox(height: 12),
-          _buildLotCard(context, 'Metro Mall Parking', '80 Spots', 'Rs 60/hr', true),
-          const SizedBox(height: 12),
-          _buildLotCard(context, 'Main Street Parking', '60 Spots', 'Rs 40/hr', true),
-          const SizedBox(height: 12),
-          _buildLotCard(context, 'Riverside Parking', '50 Spots', 'Rs 45/hr', false),
-        ],
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _edit(),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Add Parking Lot'),
+      ),
+      body: FutureBuilder<List<ParkingLot>>(
+        future: _lots,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: LoadingIndicator());
+          }
+          if (snapshot.hasError) {
+            return _message(
+              ApiService.describeError(snapshot.error!),
+              action: TextButton(
+                onPressed: _refresh,
+                child: const Text('Retry'),
+              ),
+            );
+          }
+          final lots = snapshot.data ?? const <ParkingLot>[];
+          if (lots.isEmpty) {
+            return _message(
+              'No parking lots have been added.',
+              action: OutlinedButton.icon(
+                onPressed: () => _edit(),
+                icon: const Icon(Icons.add),
+                label: const Text('Add Parking Lot'),
+              ),
+            );
+          }
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              itemCount: lots.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final lot = lots[index];
+                return Card(
+                  color: Colors.white,
+                  child: ListTile(
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0xFFEDECF5),
+                      child: Icon(
+                        Icons.local_parking_rounded,
+                        color: Color(0xFF126E63),
+                      ),
+                    ),
+                    title: Text(
+                      lot.name,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    subtitle: Text(
+                      '${lot.availableSlots}/${lot.totalSlots} available · '
+                      'Rs ${lot.hourlyRate.toStringAsFixed(2)}/hr · '
+                      '${lot.status.label}\n${lot.address}',
+                    ),
+                    isThreeLine: true,
+                    onTap: () => _edit(lot),
+                    trailing: PopupMenuButton<String>(
+                      onSelected: (action) {
+                        if (action == 'edit') _edit(lot);
+                        if (action == 'delete') _delete(lot);
+                      },
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(value: 'edit', child: Text('Edit')),
+                        PopupMenuItem(value: 'delete', child: Text('Delete')),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildLotCard(BuildContext context, String name, String spots, String price, bool isActive) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListTile(
-        leading: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: const Color(0xFF126E63).withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(Icons.local_parking_rounded, color: Color(0xFF126E63), size: 28),
-        ),
-        title: Text(
-          name,
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(spots),
-            Text(
-              price,
-              style: const TextStyle(
-                color: Color(0xFF126E63),
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        trailing: Column(
+  Widget _message(String text, {Widget? action}) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: isActive ? Colors.green : Colors.red,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(height: 4),
-            IconButton(
-              icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF6B7280)),
-              onPressed: () {},
-            ),
+            Text(text, textAlign: TextAlign.center),
+            if (action != null) ...[const SizedBox(height: 12), action],
           ],
         ),
-        onTap: () => Navigator.pushNamed(context, '/add-edit-parking-lot'),
       ),
     );
   }

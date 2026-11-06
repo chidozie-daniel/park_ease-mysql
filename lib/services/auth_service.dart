@@ -59,16 +59,11 @@ class AuthService {
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await _api.post(ApiConfig.authLogin, {
-      'email': email,
+      'email': email.trim(),
       'password': password,
     }, requireAuth: false);
 
-    if (response['token'] != null) {
-      await _saveToken(response['token']);
-    }
-    if (response['user'] != null) {
-      await _saveUser(User.fromJson(response['user']));
-    }
+    await _saveSession(response);
     return response;
   }
 
@@ -85,13 +80,25 @@ class AuthService {
       'password': password,
     }, requireAuth: false);
 
-    if (response['token'] != null) {
-      await _saveToken(response['token']);
-    }
-    if (response['user'] != null) {
-      await _saveUser(User.fromJson(response['user']));
-    }
+    await _saveSession(response);
     return response;
+  }
+
+  Future<void> _saveSession(Map<String, dynamic> response) async {
+    final token = response['token'];
+    final userData = response['user'];
+    if (token is! String ||
+        token.isEmpty ||
+        userData is! Map<String, dynamic>) {
+      throw ApiException(
+        'The server returned an invalid sign-in response.',
+        502,
+      );
+    }
+
+    final user = User.fromJson(userData);
+    await _saveToken(token);
+    await _saveUser(user);
   }
 
   Future<void> logout() async {

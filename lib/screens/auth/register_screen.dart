@@ -25,6 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscureConfirm = true;
   bool _isLoading = false;
   bool _agreedToTerms = false;
+  bool _showTermsError = false;
 
   @override
   void dispose() {
@@ -38,14 +39,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_passwordController.text != _confirmController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Passwords do not match'),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: Colors.red,
-        ),
-      );
+    if (!_agreedToTerms) {
+      setState(() => _showTermsError = true);
       return;
     }
 
@@ -60,7 +55,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _passwordController.text,
       );
       if (mounted) {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.home,
+          (route) => false,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -104,9 +103,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Center(
                     child: Image.asset(
                       'assets/images/splash_logo.png',
-                      width: 220,
-                      height: 147,
-                      fit: BoxFit.cover,
+                      width: 200,
+                      height: 140,
+                      fit: BoxFit.contain,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -127,30 +126,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 32),
                   _buildField(
                     label: 'Full Name',
+                    hint: 'Enter your full name',
                     controller: _nameController,
                     validator: AppValidators.name,
                     prefixIcon: const Icon(Icons.person_outlined, size: 20),
                     autofillHints: const [AutofillHints.name],
+                    textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 20),
                   _buildField(
                     label: 'Email Address',
+                    hint: 'you@example.com',
                     controller: _emailController,
                     validator: AppValidators.email,
                     prefixIcon: const Icon(Icons.email_outlined, size: 20),
                     autofillHints: const [AutofillHints.email],
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 20),
                   _buildField(
                     label: 'Phone Number',
+                    hint: 'Enter your phone number',
                     controller: _phoneController,
                     validator: AppValidators.phone,
                     prefixIcon: const Icon(Icons.phone_outlined, size: 20),
                     autofillHints: const [AutofillHints.telephoneNumber],
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 20),
                   _buildField(
                     label: 'Password',
+                    hint: 'At least 8 characters',
                     controller: _passwordController,
                     validator: AppValidators.strongPassword,
                     obscureText: _obscurePassword,
@@ -166,10 +174,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           setState(() => _obscurePassword = !_obscurePassword),
                     ),
                     autofillHints: const [AutofillHints.password],
+                    textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 20),
                   _buildField(
                     label: 'Confirm Password',
+                    hint: 'Re-enter your password',
                     controller: _confirmController,
                     validator: (v) {
                       if (v == null || v.isEmpty) {
@@ -193,22 +203,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           setState(() => _obscureConfirm = !_obscureConfirm),
                     ),
                     autofillHints: const [AutofillHints.password],
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _register(),
                   ),
+                  const SizedBox(height: 12),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      SizedBox(
-                        width: 32,
-                        height: 40,
-                        child: Checkbox(
-                          value: _agreedToTerms,
-                          onChanged: (value) {
-                            setState(() => _agreedToTerms = value ?? false);
-                          },
-                          visualDensity: VisualDensity.compact,
-                        ),
+                      Checkbox(
+                        value: _agreedToTerms,
+                        onChanged: (value) {
+                          setState(() {
+                            _agreedToTerms = value ?? false;
+                            _showTermsError = false;
+                          });
+                        },
+                        visualDensity: VisualDensity.compact,
                       ),
-                      const SizedBox(width: 6),
                       const Expanded(
                         child: Text.rich(
                           TextSpan(
@@ -242,6 +253,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ],
                   ),
+                  if (_showTermsError)
+                    const Padding(
+                      padding: EdgeInsets.only(left: 12, top: 4),
+                      child: Text(
+                        'Please agree to the Terms of Service and Privacy Policy.',
+                        style: TextStyle(
+                          color: Color(0xFFB3261E),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 24),
                   AppButton(
                     label: 'Create Account',
@@ -288,12 +310,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget _buildField({
     required String label,
+    required String hint,
     required TextEditingController controller,
     required String? Function(String?)? validator,
     bool obscureText = false,
     Widget? prefixIcon,
     Widget? suffixIcon,
     Iterable<String>? autofillHints,
+    TextInputType? keyboardType,
+    TextInputAction? textInputAction,
+    ValueChanged<String>? onFieldSubmitted,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,31 +333,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
         const SizedBox(height: 6),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFC8C7D4), width: 1),
+        TextFormField(
+          controller: controller,
+          validator: validator,
+          obscureText: obscureText,
+          obscuringCharacter: '•',
+          autofillHints: autofillHints,
+          keyboardType: keyboardType,
+          textInputAction: textInputAction,
+          onFieldSubmitted: onFieldSubmitted,
+          style: const TextStyle(
+            color: Colors.black87,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
           ),
-          child: TextField(
-            controller: controller,
-            obscureText: obscureText,
-            obscuringCharacter: '•',
-            autofillHints: autofillHints,
-            style: const TextStyle(
-              color: Colors.black87,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
-              prefixIcon: prefixIcon,
-              suffixIcon: suffixIcon,
-            ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: Color(0xFF9894BE), fontSize: 14),
+            prefixIcon: prefixIcon,
+            suffixIcon: suffixIcon,
           ),
         ),
       ],

@@ -2,7 +2,17 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'payment.g.dart';
 
-enum PaymentMethod { creditCard, debitCard, upi, wallet, netBanking, cash }
+enum PaymentMethod {
+  @JsonValue('credit_card')
+  creditCard,
+  @JsonValue('debit_card')
+  debitCard,
+  upi,
+  wallet,
+  @JsonValue('net_banking')
+  netBanking,
+  cash,
+}
 
 extension PaymentMethodExtension on PaymentMethod {
   String get label {

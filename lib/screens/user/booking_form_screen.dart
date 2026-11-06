@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/routes.dart';
 import '../../models/vehicle.dart';
 import '../../services/api_service.dart';
 import '../../services/booking_service.dart';
@@ -55,10 +56,12 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         setState(() {
           _vehicles = vehicles;
           // Pre-select the default vehicle if one exists
-          _selectedVehicle = vehicles.firstWhere(
-            (v) => v.isDefault,
-            orElse: () => vehicles.isNotEmpty ? vehicles.first : vehicles.first,
-          );
+          _selectedVehicle = vehicles.isEmpty
+              ? null
+              : vehicles.firstWhere(
+                  (v) => v.isDefault,
+                  orElse: () => vehicles.first,
+                );
         });
       }
     } catch (e) {
@@ -205,8 +208,11 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.access_time_rounded,
-                    color: Color(0xFF126E63), size: 18),
+                const Icon(
+                  Icons.access_time_rounded,
+                  color: Color(0xFF126E63),
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Duration: ${AppHelpers.formatDuration(_duration)}',
@@ -318,11 +324,9 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
             ),
             if (v.isDefault)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color:
-                      const Color(0xFF126E63).withValues(alpha: 0.12),
+                  color: const Color(0xFF126E63).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(
@@ -336,8 +340,11 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
               ),
             if (isSelected) ...[
               const SizedBox(width: 8),
-              const Icon(Icons.check_circle_rounded,
-                  color: Color(0xFF126E63), size: 22),
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF126E63),
+                size: 22,
+              ),
             ],
           ],
         ),
@@ -357,16 +364,18 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.calendar_today_rounded,
-                size: 18, color: Color(0xFF9894BD)),
+            const Icon(
+              Icons.calendar_today_rounded,
+              size: 18,
+              color: Color(0xFF9894BD),
+            ),
             const SizedBox(width: 12),
             Text(
               label,
               style: const TextStyle(fontSize: 15, color: Colors.black87),
             ),
             const Spacer(),
-            const Icon(Icons.chevron_right_rounded,
-                color: Color(0xFF6B7280)),
+            const Icon(Icons.chevron_right_rounded, color: Color(0xFF6B7280)),
           ],
         ),
       ),
@@ -382,7 +391,13 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         ),
         const SizedBox(height: 12),
         OutlinedButton(
-          onPressed: () => Navigator.pushNamed(context, '/add-vehicle'),
+          onPressed: () async {
+            final added = await Navigator.pushNamed(
+              context,
+              AppRoutes.addVehicle,
+            );
+            if (added == true && mounted) await _loadVehicles();
+          },
           child: const Text('Add Vehicle'),
         ),
       ],

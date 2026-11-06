@@ -18,7 +18,14 @@ class PaymentService {
     final response = await _api.post(ApiConfig.payments, {
       'bookingId': bookingId,
       'amount': amount,
-      'method': method.name,
+      'method': switch (method) {
+        PaymentMethod.creditCard => 'credit_card',
+        PaymentMethod.debitCard => 'debit_card',
+        PaymentMethod.upi => 'upi',
+        PaymentMethod.wallet => 'wallet',
+        PaymentMethod.netBanking => 'net_banking',
+        PaymentMethod.cash => 'cash',
+      },
       'gatewayToken': gatewayToken,
     });
     return Payment.fromJson(response['data'] as Map<String, dynamic>);

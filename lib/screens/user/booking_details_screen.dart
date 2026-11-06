@@ -1,150 +1,217 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../../app/routes.dart';
+import '../../models/booking.dart';
+import '../../services/api_service.dart';
+import '../../services/booking_service.dart';
+import '../../utils/utils.dart';
 import '../../widgets/app_button.dart';
+import '../../widgets/loading_indicator.dart';
 
-class BookingDetailsScreen extends StatelessWidget {
+class BookingDetailsScreen extends StatefulWidget {
   final String bookingId;
 
   const BookingDetailsScreen({super.key, required this.bookingId});
+
+  @override
+  State<BookingDetailsScreen> createState() => _BookingDetailsScreenState();
+}
+
+class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
+  final _service = BookingService();
+  late Future<Booking> _booking;
+
+  @override
+  void initState() {
+    super.initState();
+    _booking = _service.getBooking(widget.bookingId);
+  }
+
+  Future<void> _copyBooking(Booking booking) async {
+    await Clipboard.setData(
+      ClipboardData(
+        text:
+            'Park Ease booking ${booking.id}\n'
+            'Parking lot: ${booking.parkingLotId}\n'
+            'Start: ${booking.startTime.toLocal()}\n'
+            'End: ${booking.endTime.toLocal()}',
+      ),
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Booking details copied.')));
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Booking Details'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
         actions: [
           IconButton(
+            tooltip: 'Copy booking details',
             icon: const Icon(Icons.share_rounded),
-            onPressed: () {},
+            onPressed: () async {
+              final booking = await _booking;
+              if (mounted) await _copyBooking(booking);
+            },
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Container(
+      body: FutureBuilder<Booking>(
+        future: _booking,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: LoadingIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      ApiService.describeError(snapshot.error!),
+                      textAlign: TextAlign.center,
+                    ),
+                    TextButton(
+                      onPressed: () => setState(
+                        () => _booking = _service.getBooking(widget.bookingId),
+                      ),
+                      child: const Text('Try again'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          return _details(snapshot.data!);
+        },
+      ),
+    );
+  }
+
+  Widget _details(Booking booking) {
+    final isActive = booking.status == BookingStatus.checkedIn;
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          color: Colors.white,
+          child: Padding(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF126E63).withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.local_parking_rounded,
-                    size: 40,
-                    color: Color(0xFF126E63),
-                  ),
+                const Icon(
+                  Icons.local_parking_rounded,
+                  size: 56,
+                  color: Color(0xFF126E63),
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Booking Confirmed',
-                  style: TextStyle(
-                    color: Color(0xFF126E63),
-                    fontSize: 18,
+                const SizedBox(height: 12),
+                Text(
+                  booking.status.label,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: const Color(0xFF126E63),
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const Divider(height: 32),
-                _buildRow('Booking ID', bookingId),
-                const SizedBox(height: 12),
-                _buildRow('Parking Lot', 'City Center Parking'),
-                const SizedBox(height: 12),
-                _buildRow('Slot Number', 'A12'),
-                const SizedBox(height: 12),
-                _buildRow('Vehicle', 'Toyota Camry (ABC123)'),
-                const SizedBox(height: 12),
-                _buildRow('Date', '15 Sep 2026'),
-                const SizedBox(height: 12),
-                _buildRow('Entry Time', '2:00 PM'),
-                const SizedBox(height: 12),
-                _buildRow('Exit Time', '6:00 PM'),
-                const SizedBox(height: 12),
-                _buildRow('Duration', '4 hours'),
-                const SizedBox(height: 12),
-                _buildRow('Hourly Rate', 'Rs 50/hr'),
-                const SizedBox(height: 12),
-                _buildRow('Total Amount', 'Rs 200'),
-                const Divider(height: 32),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF126E63).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
+                _row('Booking ID', booking.id),
+                _row('Parking Lot', booking.parkingLotId),
+                if (booking.parkingSlotId != null)
+                  _row('Slot', booking.parkingSlotId!),
+                _row('Vehicle', booking.vehicleId),
+                _row('Start', _formatDateTime(booking.startTime)),
+                _row('End', _formatDateTime(booking.endTime)),
+                _row('Duration', AppHelpers.formatDuration(booking.duration)),
+                _row('Total', AppHelpers.formatPrice(booking.totalAmount)),
+                if (booking.qrCode?.isNotEmpty ?? false) ...[
+                  const Divider(height: 28),
+                  const Text(
+                    'Check-in code',
+                    style: TextStyle(fontWeight: FontWeight.w700),
                   ),
-                  child: const Text(
-                    'Active',
-                    style: TextStyle(
-                      color: Color(0xFF126E63),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  const SizedBox(height: 6),
+                  SelectableText(booking.qrCode!),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Show this code to parking staff when you arrive.',
+                    style: TextStyle(color: Colors.black54, fontSize: 12),
                   ),
-                ),
+                ],
               ],
             ),
           ),
-          const SizedBox(height: 24),
+        ),
+        const SizedBox(height: 20),
+        if (isActive)
           AppButton(
             label: 'Navigate to Parking',
-            onPressed: () => Navigator.pushNamed(context, '/navigate-parking'),
+            onPressed: () => Navigator.pushNamed(
+              context,
+              AppRoutes.navigateParking,
+              arguments: {'parkingLotId': booking.parkingLotId},
+            ),
+          ),
+        if (booking.status == BookingStatus.pending ||
+            booking.status == BookingStatus.confirmed) ...[
+          AppButton(
+            label: 'Navigate to Parking',
+            onPressed: () => Navigator.pushNamed(
+              context,
+              AppRoutes.navigateParking,
+              arguments: {'parkingLotId': booking.parkingLotId},
+            ),
           ),
           const SizedBox(height: 12),
           OutlinedButton(
-            onPressed: () {},
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 56),
-              side: const BorderSide(color: Color(0xFF9894BD)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+            onPressed: () => Navigator.pushNamed(
+              context,
+              AppRoutes.payment,
+              arguments: {
+                'bookingId': booking.id,
+                'amount': booking.totalAmount,
+              },
             ),
-            child: const Text('Share Booking'),
+            child: const Text('Go to Payment'),
           ),
+        ],
+        const SizedBox(height: 12),
+        OutlinedButton(
+          onPressed: () => Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.myBookings,
+            (route) => route.settings.name == AppRoutes.home,
+          ),
+          child: const Text('Back to My Bookings'),
+        ),
+      ],
+    );
+  }
+
+  Widget _row(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.black54)),
+          const SizedBox(width: 12),
+          Expanded(child: Text(value, textAlign: TextAlign.end)),
         ],
       ),
     );
   }
 
-  Widget _buildRow(String label, String value) {
-    return Row(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFF6B7280),
-            fontSize: 14,
-          ),
-        ),
-        const Spacer(),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
+  String _formatDateTime(DateTime value) {
+    final local = value.toLocal();
+    return '${local.day}/${local.month}/${local.year} '
+        '${local.hour.toString().padLeft(2, '0')}:'
+        '${local.minute.toString().padLeft(2, '0')}';
   }
 }

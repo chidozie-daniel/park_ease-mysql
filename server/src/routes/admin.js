@@ -273,6 +273,64 @@ router.get(
   })
 );
 
+router.put(
+  '/bookings/:id/status',
+  wrap(async (req, res) => {
+    const { status } = req.body || {};
+    if (!['cancelled', 'checked_out'].includes(status)) {
+      throw new HttpError(400, 'Status must be cancelled or checked_out');
+    }
+
+    await db.withTransaction(async (conn) => {
+      const [rows] = await conn.query(
+        `SELECT id, parking_lot_id, parking_slot_id, status
+         FROM bookings WHERE id = ? FOR UPDATE`,
+        [req.params.id]
+      );
+      const booking = rows[0];
+      if (!booking) throw new HttpError(404, 'Booking not found');
+
+      const allowed =
+        status === 'cancelled'
+          ? ['pending', 'confirmed', 'checked_in'].includes(booking.status)
+          : booking.status === 'checked_in';
+      if (!allowed) {
+        throw new HttpError(409, 'Booking cannot be changed to this status');
+      }
+
+      const [updated] = await conn.query(
+        `UPDATE bookings SET status = ? WHERE id = ? AND status = ?`,
+        [status, booking.id, booking.status]
+      );
+      if (!updated.affectedRows) {
+        throw new HttpError(409, 'Booking status has changed; refresh and retry');
+      }
+
+      if (booking.parking_slot_id) {
+        await conn.query(
+          `UPDATE parking_slots SET status = 'available' WHERE id = ?`,
+          [booking.parking_slot_id]
+        );
+      }
+      await conn.query(
+        `UPDATE parking_lots
+         SET available_slots = LEAST(available_slots + 1, total_slots)
+         WHERE id = ?`,
+        [booking.parking_lot_id]
+      );
+    });
+
+    const [rows] = await db.query(
+      `SELECT id, user_id, parking_lot_id, parking_slot_id, vehicle_id,
+              start_time, end_time, total_amount, discount_amount, status,
+              qr_code, created_at, updated_at
+       FROM bookings WHERE id = ?`,
+      [req.params.id]
+    );
+    res.json({ data: camelizeKeys(rows[0]) });
+  })
+);
+
 router.get(
   '/reports',
   wrap(async (req, res) => {
@@ -343,6 +401,31 @@ router.post(
       [id]
     );
     res.status(201).json({ data: camelizeKeys(rows[0]) });
+  })
+);
+
+router.post(
+  '/notifications',
+  wrap(async (req, res) => {
+    const title = String(req.body?.title || '').trim();
+    const body = String(req.body?.body || '').trim();
+    if (!title || !body) {
+      throw new HttpError(400, 'Title and message are required');
+    }
+    if (title.length > 150 || body.length > 2000) {
+      throw new HttpError(400, 'Title or message is too long');
+    }
+
+    const [result] = await db.query(
+      `INSERT INTO notifications (id, user_id, type, title, body)
+       SELECT UUID(), id, 'system', ?, ?
+       FROM users WHERE is_active = 1`,
+      [title, body]
+    );
+    res.status(201).json({
+      message: 'Notification sent to active users',
+      recipientCount: result.affectedRows,
+    });
   })
 );
 

@@ -1,140 +1,165 @@
 import 'package:flutter/material.dart';
 
-class ManageBookingsScreen extends StatelessWidget {
+import '../../app/routes.dart';
+import '../../services/admin_service.dart';
+import '../../services/api_service.dart';
+import '../../widgets/loading_indicator.dart';
+
+class ManageBookingsScreen extends StatefulWidget {
   const ManageBookingsScreen({super.key});
+
+  @override
+  State<ManageBookingsScreen> createState() => _ManageBookingsScreenState();
+}
+
+class _ManageBookingsScreenState extends State<ManageBookingsScreen> {
+  final _service = AdminService();
+  late Future<List<Map<String, dynamic>>> _bookings;
+  String _filter = 'All';
+
+  @override
+  void initState() {
+    super.initState();
+    _bookings = _service.getBookings();
+  }
+
+  Future<void> _refresh() async {
+    final request = _service.getBookings();
+    setState(() => _bookings = request);
+    await request;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manage Bookings'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildBookingCard(
-            'BK001',
-            'John Doe',
-            'City Center Parking',
-            'Today, 2:00 PM',
-            'Active',
-            Colors.green,
-            () => Navigator.pushNamed(context, '/admin-booking-details'),
-          ),
-          const SizedBox(height: 12),
-          _buildBookingCard(
-            'BK002',
-            'Jane Smith',
-            'Metro Mall Parking',
-            'Today, 5:00 PM',
-            'Confirmed',
-            Colors.blue,
-            () => Navigator.pushNamed(context, '/admin-booking-details'),
-          ),
-          const SizedBox(height: 12),
-          _buildBookingCard(
-            'BK003',
-            'Mike Johnson',
-            'Main Street Parking',
-            '14 Sep 2026',
-            'Completed',
-            Colors.grey,
-            () => Navigator.pushNamed(context, '/admin-booking-details'),
-          ),
-        ],
+      appBar: AppBar(title: const Text('Manage Bookings')),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _bookings,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: LoadingIndicator());
+          }
+          if (snapshot.hasError) {
+            return _message(
+              ApiService.describeError(snapshot.error!),
+              action: TextButton(
+                onPressed: _refresh,
+                child: const Text('Retry'),
+              ),
+            );
+          }
+          final all = snapshot.data ?? const <Map<String, dynamic>>[];
+          final rows = all.where((booking) {
+            final status = booking['status'] as String? ?? '';
+            return switch (_filter) {
+              'Upcoming' => status == 'pending' || status == 'confirmed',
+              'Active' => status == 'checked_in',
+              'History' =>
+                status == 'checked_out' ||
+                    status == 'cancelled' ||
+                    status == 'no_show',
+              _ => true,
+            };
+          }).toList();
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              children: [
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final filter in [
+                      'All',
+                      'Upcoming',
+                      'Active',
+                      'History',
+                    ])
+                      ChoiceChip(
+                        label: Text(filter),
+                        selected: _filter == filter,
+                        onSelected: (_) => setState(() => _filter = filter),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (rows.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text(
+                      'No bookings in this category.',
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                else
+                  for (final booking in rows)
+                    Card(
+                      color: Colors.white,
+                      child: ListTile(
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          AppRoutes.adminBookingDetails,
+                          arguments: {'bookingId': booking['id']},
+                        ),
+                        leading: const CircleAvatar(
+                          child: Icon(Icons.receipt_long_rounded),
+                        ),
+                        title: Text(
+                          booking['userName'] as String? ?? 'Customer',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        subtitle: Text(
+                          '${booking['lotName'] ?? 'Parking lot'}\n'
+                          '${_date(booking['startTime'])}',
+                        ),
+                        isThreeLine: true,
+                        trailing: Chip(
+                          label: Text(
+                            _label(booking['status'] as String? ?? ''),
+                          ),
+                        ),
+                      ),
+                    ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildBookingCard(
-    String id,
-    String user,
-    String parking,
-    String time,
-    String status,
-    Color statusColor,
-    VoidCallback onTap,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListTile(
-        leading: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: const Color(0xFF9894BD).withValues(alpha: 0.15),
-            shape: BoxShape.circle,
-          ),
-          child: Text(
-            id.replaceAll('BK', ''),
-            style: const TextStyle(
-              color: Color(0xFF9894BD),
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        title: Text(
-          user,
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        subtitle: Column(
-          spacing: 4,
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _message(String text, {Widget? action}) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(parking),
-            Text(
-              time,
-              style: const TextStyle(
-                color: Color(0xFF6B7280),
-                fontSize: 12,
-              ),
-            ),
+            Text(text, textAlign: TextAlign.center),
+            if (action != null) ...[const SizedBox(height: 12), action],
           ],
         ),
-        trailing: Column(
-          spacing: 6,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                status,
-                style: TextStyle(
-                  color: statusColor,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF6B7280)),
-          ],
-        ),
-        onTap: onTap,
       ),
     );
+  }
+
+  String _label(String status) => switch (status) {
+    'checked_in' => 'Checked In',
+    'checked_out' => 'Checked Out',
+    'no_show' => 'No Show',
+    _ =>
+      status.isEmpty
+          ? 'Unknown'
+          : '${status[0].toUpperCase()}${status.substring(1)}',
+  };
+
+  String _date(Object? value) {
+    final date = DateTime.tryParse(value?.toString() ?? '');
+    if (date == null) return 'Date unavailable';
+    final local = date.toLocal();
+    return '${local.day}/${local.month}/${local.year} '
+        '${local.hour.toString().padLeft(2, '0')}:'
+        '${local.minute.toString().padLeft(2, '0')}';
   }
 }

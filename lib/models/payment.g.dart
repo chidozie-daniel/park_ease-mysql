@@ -31,11 +31,11 @@ Map<String, dynamic> _$PaymentToJson(Payment instance) => <String, dynamic>{
 };
 
 const _$PaymentMethodEnumMap = {
-  PaymentMethod.creditCard: 'creditCard',
-  PaymentMethod.debitCard: 'debitCard',
+  PaymentMethod.creditCard: 'credit_card',
+  PaymentMethod.debitCard: 'debit_card',
   PaymentMethod.upi: 'upi',
   PaymentMethod.wallet: 'wallet',
-  PaymentMethod.netBanking: 'netBanking',
+  PaymentMethod.netBanking: 'net_banking',
   PaymentMethod.cash: 'cash',
 };
 

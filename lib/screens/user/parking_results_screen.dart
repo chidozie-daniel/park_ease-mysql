@@ -1,112 +1,190 @@
 import 'package:flutter/material.dart';
 
-class ParkingResultsScreen extends StatelessWidget {
+import '../../app/routes.dart';
+import '../../models/parking_lot.dart';
+import '../../services/api_service.dart';
+import '../../services/parking_service.dart';
+import '../../utils/utils.dart';
+import '../../widgets/loading_indicator.dart';
+
+class ParkingResultsScreen extends StatefulWidget {
   final String query;
 
   const ParkingResultsScreen({super.key, required this.query});
 
   @override
+  State<ParkingResultsScreen> createState() => _ParkingResultsScreenState();
+}
+
+class _ParkingResultsScreenState extends State<ParkingResultsScreen> {
+  final _parking = ParkingService();
+  late Future<List<ParkingLot>> _lots;
+  bool _sortByPrice = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _lots = _loadLots();
+  }
+
+  Future<List<ParkingLot>> _loadLots() {
+    final query = widget.query.trim();
+    return query.isEmpty
+        ? _parking.getAllLots()
+        : _parking.searchParking(query);
+  }
+
+  Future<void> _refresh() async {
+    final request = _loadLots();
+    setState(() => _lots = request);
+    await request;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(query.isEmpty ? 'Parking Results' : query),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
+        title: Text(widget.query.isEmpty ? 'All Parking' : widget.query),
         actions: [
           IconButton(
+            tooltip: _sortByPrice ? 'Sort by availability' : 'Sort by price',
             icon: const Icon(Icons.filter_list_rounded),
-            onPressed: () {},
+            onPressed: () => setState(() => _sortByPrice = !_sortByPrice),
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildResultCard(context, 'City Center Parking', '120 Spots Available', '0.3km', 'Rs 50/hr'),
-          const SizedBox(height: 12),
-          _buildResultCard(context, 'Main Street Parking', '80 Spots Available', '0.5km', 'Rs 40/hr'),
-          const SizedBox(height: 12),
-          _buildResultCard(context, 'Metro Mall Parking', '70 Spots Available', '0.8km', 'Rs 60/hr'),
-          const SizedBox(height: 12),
-          _buildResultCard(context, 'Grand Plaza Parking', '90 Spots Available', '1.2km', 'Rs 55/hr'),
-          const SizedBox(height: 12),
-          _buildResultCard(context, 'Riverside Parking', '60 Spots Available', '1.5km', 'Rs 45/hr'),
-        ],
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        child: FutureBuilder<List<ParkingLot>>(
+          future: _lots,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: LoadingIndicator());
+            }
+            if (snapshot.hasError) {
+              return _Message(
+                icon: Icons.cloud_off_rounded,
+                message: ApiService.describeError(snapshot.error!),
+                action: TextButton(
+                  onPressed: _refresh,
+                  child: const Text('Try again'),
+                ),
+              );
+            }
+            final lots = [...?snapshot.data];
+            if (_sortByPrice) {
+              lots.sort((a, b) => a.hourlyRate.compareTo(b.hourlyRate));
+            } else {
+              lots.sort((a, b) => b.availableSlots.compareTo(a.availableSlots));
+            }
+            if (lots.isEmpty) {
+              return _Message(
+                icon: Icons.local_parking_outlined,
+                message: widget.query.isEmpty
+                    ? 'No parking locations are available yet.'
+                    : 'No parking locations matched "${widget.query}".',
+                action: TextButton.icon(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.searchParking),
+                  icon: const Icon(Icons.map_outlined),
+                  label: const Text('Search on map'),
+                ),
+              );
+            }
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              itemCount: lots.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final lot = lots[index];
+                return _LotCard(
+                  lot: lot,
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.parkingDetails,
+                    arguments: {'parkingLotId': lot.id},
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
+}
 
-  Widget _buildResultCard(BuildContext context, String name, String spots, String distance, String price) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+class _LotCard extends StatelessWidget {
+  final ParkingLot lot;
+  final VoidCallback onTap;
+
+  const _LotCard({required this.lot, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.white,
+      clipBehavior: Clip.antiAlias,
       child: ListTile(
-        leading: Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            gradient: const SweepGradient(
-              colors: [
-                Color(0xFFDEDCEC),
-                Color(0xFFF3F3F7),
-                Color(0xFFC8C7DF),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(Icons.local_parking_rounded, color: Color(0xFF126E63)),
+        contentPadding: const EdgeInsets.all(12),
+        leading: const CircleAvatar(
+          backgroundColor: Color(0xFFEDECF5),
+          child: Icon(Icons.local_parking_rounded, color: Color(0xFF126E63)),
         ),
         title: Text(
-          name,
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
+          lot.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(lot.address, maxLines: 1, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 4),
+              Text(
+                lot.isBookable
+                    ? '${lot.availableSlots} of ${lot.totalSlots} spots · '
+                          '${AppHelpers.formatPrice(lot.hourlyRate)}/hr'
+                    : 'Community listing · availability not listed',
+              ),
+            ],
           ),
         ),
-        subtitle: Text(
-          spots,
-          style: const TextStyle(
-            color: Colors.black54,
-            fontSize: 12,
-          ),
-        ),
-        trailing: Column(
-          spacing: 4,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              distance,
-              style: const TextStyle(
-                color: Color(0xFF9894BD),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Text(
-              price,
-              style: const TextStyle(
-                color: Color(0xFF126E63),
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-        onTap: () => Navigator.pushNamed(context, '/parking-details'),
+        trailing: const Icon(Icons.chevron_right_rounded),
+        onTap: onTap,
       ),
+    );
+  }
+}
+
+class _Message extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  final Widget? action;
+
+  const _Message({required this.icon, required this.message, this.action});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        const SizedBox(height: 120),
+        Icon(icon, size: 64, color: Colors.black38),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Text(message, textAlign: TextAlign.center),
+        ),
+        if (action != null) ...[
+          const SizedBox(height: 12),
+          Center(child: action),
+        ],
+      ],
     );
   }
 }
