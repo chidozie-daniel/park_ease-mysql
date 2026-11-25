@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../app/routes.dart';
 import '../../models/parking_lot.dart';
@@ -234,7 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             Text(message, textAlign: TextAlign.center),
-            if (action != null) action,
+            ?action,
           ],
         ),
       ),
