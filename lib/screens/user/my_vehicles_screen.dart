@@ -201,10 +201,14 @@ class _VehicleCard extends StatelessWidget {
         ),
         title: Text(
           '${vehicle.brand} ${vehicle.model}'.trim(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         subtitle: Text(
           '${vehicle.type.label} · ${vehicle.color}\n${vehicle.licensePlate}',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
         isThreeLine: true,
         trailing: vehicle.isDefault

@@ -12,11 +12,13 @@ import '../../widgets/app_button.dart';
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
   final String purpose;
+  final String? devOtp;
 
   const OtpVerificationScreen({
     super.key,
     required this.email,
     this.purpose = 'register',
+    this.devOtp,
   });
 
   @override
@@ -30,10 +32,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   bool _isLoading = false;
   int _resendTimer = 60;
   Timer? _resendCountdown;
+  String? _devOtp;
 
   @override
   void initState() {
     super.initState();
+    _devOtp = widget.devOtp;
     _resendCountdown = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() {
@@ -108,12 +112,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
   }
 
-  Future<void> _sendCode({required bool showError}) async {
+  Future<Map<String, dynamic>?> _sendCode({required bool showError}) async {
     try {
-      await context.read<AuthService>().sendOtp(
+      final response = await context.read<AuthService>().sendOtp(
         widget.email,
         purpose: widget.purpose,
       );
+      final devOtp = response['devOtp'];
+      if (devOtp is String && mounted) {
+        setState(() => _devOtp = devOtp);
+      }
+      return response;
     } catch (e) {
       if (showError && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -124,6 +133,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           ),
         );
       }
+      return null;
     }
   }
 
@@ -160,17 +170,38 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 Text(
                   'Verify Your Email',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF111827),
-                      ),
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF111827),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'We sent a 6-digit code to ${widget.email}',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF6B7280),
-                      ),
+                    color: const Color(0xFF6B7280),
+                  ),
                 ),
+                if (_devOtp != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE7F5F1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Development code: $_devOtp',
+                      style: const TextStyle(
+                        color: Color(0xFF126E63),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 40),
                 Form(
                   key: _formKey,

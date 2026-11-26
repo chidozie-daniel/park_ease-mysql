@@ -56,7 +56,6 @@ class AppTextField extends StatelessWidget {
               color: Colors.black,
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              height: 1.07,
             ),
           ),
           const SizedBox(height: 6),
@@ -65,10 +64,7 @@ class AppTextField extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFFC8C7D4),
-              width: 1,
-            ),
+            border: Border.all(color: const Color(0xFFC8C7D4), width: 1),
           ),
           child: TextFormField(
             controller: controller,
@@ -99,6 +95,8 @@ class AppTextField extends StatelessWidget {
                 fontWeight: FontWeight.w400,
               ),
               hintText: hint,
+              hintMaxLines: 1,
+              errorMaxLines: 2,
             ),
             onTap: onTap,
             onChanged: onChange,

@@ -23,10 +23,7 @@ class _ReportsAnalyticsScreenState extends State<ReportsAnalyticsScreen> {
       _service.getReports(),
       _service.getDashboard(),
     ]);
-    return _ReportData(
-      reports: results[0],
-      dashboard: results[1],
-    );
+    return _ReportData(reports: results[0], dashboard: results[1]);
   }
 
   @override
@@ -47,12 +44,16 @@ class _ReportsAnalyticsScreenState extends State<ReportsAnalyticsScreen> {
           }
           if (snapshot.hasError || !snapshot.hasData) {
             return Center(
-              child: Padding(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, size: 56, color: Colors.red),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 56,
+                      color: Colors.red,
+                    ),
                     const SizedBox(height: 12),
                     Text(
                       ApiService.describeError(snapshot.error ?? 'No data'),
@@ -81,7 +82,9 @@ class _ReportsAnalyticsScreenState extends State<ReportsAnalyticsScreen> {
     final average = totalBookings == 0 ? 0.0 : totalRevenue / totalBookings;
     final totalSlots = _number(data.dashboard['totalSlots']);
     final activeBookings = _number(data.dashboard['activeBookings']);
-    final occupancy = totalSlots == 0 ? 0.0 : (activeBookings / totalSlots) * 100;
+    final occupancy = totalSlots == 0
+        ? 0.0
+        : (activeBookings / totalSlots) * 100;
     final days = _lastSevenDays(data.reports);
 
     return ListView(
@@ -229,6 +232,7 @@ class _ReportsAnalyticsScreenState extends State<ReportsAnalyticsScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 12),
                     Text(
                       _number(row['bookings']).toStringAsFixed(0),
                       style: const TextStyle(fontWeight: FontWeight.w700),
@@ -261,7 +265,12 @@ class _ReportsAnalyticsScreenState extends State<ReportsAnalyticsScreen> {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return _card(
       child: Column(
         children: [
@@ -275,12 +284,15 @@ class _ReportsAnalyticsScreenState extends State<ReportsAnalyticsScreen> {
             child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(
+                color: color,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
           const SizedBox(height: 4),

@@ -150,6 +150,8 @@ class _LotCard extends StatelessWidget {
                     ? '${lot.availableSlots} of ${lot.totalSlots} spots · '
                           '${AppHelpers.formatPrice(lot.hourlyRate)}/hr'
                     : 'Community listing · availability not listed',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

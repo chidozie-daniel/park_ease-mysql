@@ -98,7 +98,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Delete account?'),
-            content: Text('Delete ${user.name} (${user.email}) permanently?'),
+            content: Text(
+              'Delete ${user.name} (${user.email}) permanently?',
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
@@ -228,32 +232,45 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                         ),
                         title: Text(
                           user.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                         subtitle: Text(
                           '${user.email}\n${user.phone ?? 'No phone number'}',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         isThreeLine: true,
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              user.role,
-                              style: const TextStyle(
-                                color: Color(0xFF126E63),
-                                fontWeight: FontWeight.w600,
+                        trailing: SizedBox(
+                          width: 88,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                user.role,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Color(0xFF126E63),
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            ),
-                            Text(
-                              user.isActive ? 'Active' : 'Inactive',
-                              style: TextStyle(
-                                color: user.isActive
-                                    ? Colors.green
-                                    : Colors.red,
-                                fontSize: 12,
+                              Text(
+                                user.isActive ? 'Active' : 'Inactive',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: user.isActive
+                                      ? Colors.green
+                                      : Colors.red,
+                                  fontSize: 12,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -267,7 +284,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
 
   Widget _message(String message, {Widget? action}) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,

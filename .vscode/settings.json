@@ -12,7 +12,22 @@
       "port": 3306,
       "driver": "MySQL",
       "name": "parkease",
-      "database": "parkease",
+      "database": "park_ease",
+      "username": "root",
+      "connectionTimeout": 40
+    },
+    {
+      "mysqlOptions": {
+        "authProtocol": "default",
+        "enableSsl": "Disabled"
+      },
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 3306,
+      "driver": "MySQL",
+      "name": "unihub",
+      "database": "unihub",
       "username": "root",
       "connectionTimeout": 40
     }

@@ -49,18 +49,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final auth = context.read<AuthService>();
     final email = _emailController.text.trim();
     try {
-      await auth.register(
+      final result = await auth.register(
         _nameController.text.trim(),
         email,
         _phoneController.text.trim(),
         _passwordController.text,
       );
+      final devOtp = result['devOtp'] as String?;
       if (mounted) {
         Navigator.pushNamedAndRemoveUntil(
           context,
           AppRoutes.otpVerification,
           (route) => false,
-          arguments: {'email': email, 'purpose': 'register'},
+          arguments: {
+            'email': email,
+            'purpose': 'register',
+            ...(devOtp != null ? {'devOtp': devOtp} : {}),
+          },
         );
       }
     } catch (e) {

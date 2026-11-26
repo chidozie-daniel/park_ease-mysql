@@ -182,10 +182,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         ),
                         title: Text(
                           notification.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                         subtitle: Text(
                           '${notification.body}\n${_formatTime(notification.createdAt)}',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         isThreeLine: true,
                         trailing: notification.isRead

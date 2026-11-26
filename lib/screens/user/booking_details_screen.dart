@@ -125,7 +125,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                 _row('Parking Lot', booking.parkingLotId),
                 if (booking.parkingSlotId != null)
                   _row('Slot', booking.parkingSlotId!),
-                _row('Vehicle', booking.vehicleId),
+                _row('Vehicle', booking.vehicleId ?? 'Not specified'),
                 _row('Start', _formatDateTime(booking.startTime)),
                 _row('End', _formatDateTime(booking.endTime)),
                 _row('Duration', AppHelpers.formatDuration(booking.duration)),
@@ -137,7 +137,11 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 6),
-                  SelectableText(booking.qrCode!),
+                  Text(
+                    booking.qrCode!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   const SizedBox(height: 4),
                   const Text(
                     'Show this code to parking staff when you arrive.',
@@ -213,7 +217,14 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         children: [
           Text(label, style: const TextStyle(color: Colors.black54)),
           const SizedBox(width: 12),
-          Expanded(child: Text(value, textAlign: TextAlign.end)),
+          Expanded(
+            child: Text(
+              value,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+            ),
+          ),
         ],
       ),
     );

@@ -88,18 +88,23 @@ abstract final class AppRoutes {
         return _route(const RegisterScreen());
       case otpVerification:
         final args = settings.arguments as Map<String, dynamic>?;
-        return _route(OtpVerificationScreen(
-          email: args?['email'] ?? '',
-          purpose: args?['purpose'] ?? 'register',
-        ));
+        return _route(
+          OtpVerificationScreen(
+            email: args?['email'] ?? '',
+            purpose: args?['purpose'] ?? 'register',
+            devOtp: args?['devOtp'] as String?,
+          ),
+        );
       case forgotPassword:
         return _route(const ForgotPasswordScreen());
       case resetPassword:
         final args = settings.arguments as Map<String, dynamic>?;
-        return _route(ResetPasswordScreen(
-          email: args?['email'] ?? '',
-          otp: args?['otp'] ?? '',
-        ));
+        return _route(
+          ResetPasswordScreen(
+            email: args?['email'] ?? '',
+            otp: args?['otp'] ?? '',
+          ),
+        );
       case passwordResetSuccess:
         return _route(const PasswordResetSuccessScreen());
       case home:
@@ -108,47 +113,47 @@ abstract final class AppRoutes {
         return _route(const SearchParkingScreen());
       case parkingResults:
         final args = settings.arguments as Map<String, dynamic>?;
-        return _route(ParkingResultsScreen(
-          query: args?['query'] ?? '',
-        ));
+        return _route(ParkingResultsScreen(query: args?['query'] ?? ''));
       case parkingDetails:
         final args = settings.arguments as Map<String, dynamic>?;
-        return _route(ParkingDetailsScreen(
-          parkingLotId: args?['parkingLotId'] ?? '',
-        ));
+        return _route(
+          ParkingDetailsScreen(parkingLotId: args?['parkingLotId'] ?? ''),
+        );
       case selectSlot:
         final args = settings.arguments as Map<String, dynamic>?;
-        return _route(SelectSlotScreen(
-          parkingLotId: args?['parkingLotId'] ?? '',
-        ));
+        return _route(
+          SelectSlotScreen(parkingLotId: args?['parkingLotId'] ?? ''),
+        );
       case bookingForm:
         final args = settings.arguments as Map<String, dynamic>?;
-        return _route(BookingFormScreen(
-          parkingLotId: args?['parkingLotId'] ?? '',
-          parkingSlotId: args?['parkingSlotId'],
-        ));
+        return _route(
+          BookingFormScreen(
+            parkingLotId: args?['parkingLotId'] ?? '',
+            parkingSlotId: args?['parkingSlotId'],
+          ),
+        );
       case navigateParking:
         final args = settings.arguments as Map<String, dynamic>?;
-        return _route(NavigateParkingScreen(
-          parkingLotId: args?['parkingLotId'] ?? '',
-        ));
+        return _route(
+          NavigateParkingScreen(parkingLotId: args?['parkingLotId'] ?? ''),
+        );
       case bookingConfirmation:
         final args = settings.arguments as Map<String, dynamic>?;
-        return _route(BookingConfirmationScreen(
-          bookingId: args?['bookingId'] ?? '',
-        ));
+        return _route(
+          BookingConfirmationScreen(bookingId: args?['bookingId'] ?? ''),
+        );
       case bookingDetails:
         final args = settings.arguments as Map<String, dynamic>?;
-        return _route(BookingDetailsScreen(
-          bookingId: args?['bookingId'] ?? '',
-        ));
+        return _route(
+          BookingDetailsScreen(bookingId: args?['bookingId'] ?? ''),
+        );
       case myBookings:
         return _route(const MyBookingsScreen());
       case currentParking:
         final args = settings.arguments as Map<String, dynamic>?;
-        return _route(CurrentParkingScreen(
-          bookingId: args?['bookingId'] ?? '',
-        ));
+        return _route(
+          CurrentParkingScreen(bookingId: args?['bookingId'] ?? ''),
+        );
       case bookingHistory:
         return _route(const BookingHistoryScreen());
       case scanToPark:
@@ -163,10 +168,12 @@ abstract final class AppRoutes {
         return _route(const AddVehicleScreen());
       case payment:
         final args = settings.arguments as Map<String, dynamic>?;
-        return _route(PaymentScreen(
-          bookingId: args?['bookingId'] ?? '',
-          amount: args?['amount'] ?? 0.0,
-        ));
+        return _route(
+          PaymentScreen(
+            bookingId: args?['bookingId'] ?? '',
+            amount: args?['amount'] ?? 0.0,
+          ),
+        );
       case notifications:
         return _route(const NotificationsScreen());
       case adminDashboard:
@@ -185,14 +192,14 @@ abstract final class AppRoutes {
         return _route(const AdminNotificationsScreen());
       case addEditParkingLot:
         final args = settings.arguments as Map<String, dynamic>?;
-        return _route(AddEditParkingLotScreen(
-          parkingLotId: args?['parkingLotId'],
-        ));
+        return _route(
+          AddEditParkingLotScreen(parkingLotId: args?['parkingLotId']),
+        );
       case adminBookingDetails:
         final args = settings.arguments as Map<String, dynamic>?;
-        return _route(AdminBookingDetailsScreen(
-          bookingId: args?['bookingId'] ?? '',
-        ));
+        return _route(
+          AdminBookingDetailsScreen(bookingId: args?['bookingId'] ?? ''),
+        );
     }
     return null;
   }
@@ -204,12 +211,11 @@ abstract final class AppRoutes {
         var begin = const Offset(1.0, 0.0);
         var end = Offset.zero;
         var curve = Curves.ease;
-        var tween = Tween(begin: begin, end: end)
-            .chain(CurveTween(curve: curve));
-        return SlideTransition(
-          position: animation.drive(tween),
-          child: child,
-        );
+        var tween = Tween(
+          begin: begin,
+          end: end,
+        ).chain(CurveTween(curve: curve));
+        return SlideTransition(position: animation.drive(tween), child: child);
       },
     );
   }

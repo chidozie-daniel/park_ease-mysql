@@ -11,7 +11,7 @@ Booking _$BookingFromJson(Map<String, dynamic> json) => Booking(
   userId: json['userId'] as String,
   parkingLotId: json['parkingLotId'] as String,
   parkingSlotId: json['parkingSlotId'] as String?,
-  vehicleId: json['vehicleId'] as String,
+  vehicleId: json['vehicleId'] as String?,
   startTime: DateTime.parse(json['startTime'] as String),
   endTime: DateTime.parse(json['endTime'] as String),
   totalAmount: (json['totalAmount'] as num).toDouble(),

@@ -53,7 +53,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           }
           if (snapshot.hasError) {
             return Center(
-              child: Padding(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -62,6 +62,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ApiService.describeError(snapshot.error!),
                       textAlign: TextAlign.center,
                     ),
+                    const SizedBox(height: 12),
                     TextButton(onPressed: _reload, child: const Text('Retry')),
                   ],
                 ),
@@ -113,7 +114,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   Expanded(
                     child: _buildStatCard(
                       'Revenue',
-                      AppHelpers.formatPrice(
+                      AppHelpers.formatCurrency(
                         (data['totalRevenue'] as num?)?.toDouble() ?? 0,
                       ),
                       Icons.attach_money_rounded,
@@ -235,12 +236,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(
+                color: color,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
           const SizedBox(height: 4),

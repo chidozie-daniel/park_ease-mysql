@@ -35,23 +35,41 @@ class LoadingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const LoadingIndicator(size: 56),
-            if (message != null) ...[
-              const SizedBox(height: 16),
-              Text(
-                message!,
-                style: const TextStyle(
-                  color: Colors.black54,
-                  fontSize: 14,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.hasBoundedHeight
+                        ? constraints.maxHeight
+                        : 0,
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const LoadingIndicator(size: 56),
+                        if (message != null) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            message!,
+                            style: const TextStyle(
+                              color: Colors.black54,
+                              fontSize: 14,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -103,9 +121,15 @@ class LoadingList extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(height: 14, width: 120, color: Colors.grey[300]),
+              FractionallySizedBox(
+                widthFactor: 0.8,
+                child: Container(height: 14, color: Colors.grey[300]),
+              ),
               const SizedBox(height: 8),
-              Container(height: 12, width: 80, color: Colors.grey[300]),
+              FractionallySizedBox(
+                widthFactor: 0.55,
+                child: Container(height: 12, color: Colors.grey[300]),
+              ),
             ],
           ),
         ),

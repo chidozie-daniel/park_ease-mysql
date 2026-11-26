@@ -310,10 +310,16 @@ class _BookingCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               if (booking.parkingSlotId != null)
-                Text('Slot ${booking.parkingSlotId}'),
+                Text(
+                  'Slot ${booking.parkingSlotId}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               const SizedBox(height: 8),
               Text(
                 '${_formatDate(booking.startTime)} – ${_formatDate(booking.endTime)}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(color: Colors.black54),
               ),
               const SizedBox(height: 8),

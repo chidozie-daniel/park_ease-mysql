@@ -221,6 +221,8 @@ class _SlotTile extends StatelessWidget {
             children: [
               Text(
                 slot.slotNumber,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: _color,
                   fontSize: 13,

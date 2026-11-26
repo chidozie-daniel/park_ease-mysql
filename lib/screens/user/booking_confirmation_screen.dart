@@ -54,22 +54,32 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 412),
-            child: FutureBuilder<_ConfirmationDetails>(
-              future: _details,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const LoadingIndicator();
-                }
-                if (snapshot.hasError || !snapshot.hasData) {
-                  return _buildError();
-                }
-                return _buildContent(snapshot.data!);
-              },
-            ),
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 412),
+                    child: FutureBuilder<_ConfirmationDetails>(
+                      future: _details,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const LoadingIndicator();
+                        }
+                        if (snapshot.hasError || !snapshot.hasData) {
+                          return _buildError();
+                        }
+                        return _buildContent(snapshot.data!);
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -103,7 +113,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
           ),
           const SizedBox(height: 12),
           TextButton(
-            onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.home),
+            onPressed: () =>
+                Navigator.pushReplacementNamed(context, AppRoutes.home),
             child: const Text('Back to Home'),
           ),
         ],
@@ -186,7 +197,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         ),
         const SizedBox(height: 12),
         TextButton(
-          onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.home),
+          onPressed: () =>
+              Navigator.pushReplacementNamed(context, AppRoutes.home),
           child: const Text('Back to Home'),
         ),
       ],

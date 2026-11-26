@@ -120,11 +120,14 @@ router.delete(
     if (req.params.id === req.user.id) {
       throw new HttpError(400, 'You cannot delete your own account');
     }
-    const [result] = await db.query(`DELETE FROM users WHERE id = ?`, [req.params.id]);
+    const [result] = await db.query(
+      `UPDATE users SET is_active = 0 WHERE id = ?`,
+      [req.params.id]
+    );
     if (!result.affectedRows) {
       throw new HttpError(404, 'User not found');
     }
-    res.json({ message: 'User deleted' });
+    res.json({ message: 'User deactivated' });
   })
 );
 
@@ -245,6 +248,16 @@ router.put(
 router.delete(
   '/parking-lots/:id',
   wrap(async (req, res) => {
+    const [bookings] = await db.query(
+      `SELECT COUNT(*) AS total FROM bookings WHERE parking_lot_id = ?`,
+      [req.params.id]
+    );
+    if (bookings[0].total > 0) {
+      throw new HttpError(
+        409,
+        'Cannot delete a parking lot with bookings. Deactivate it instead.'
+      );
+    }
     const [result] = await db.query(`DELETE FROM parking_lots WHERE id = ?`, [req.params.id]);
     if (!result.affectedRows) {
       throw new HttpError(404, 'Parking lot not found');
@@ -343,21 +356,25 @@ router.get(
       `SELECT l.name AS lotName, COUNT(b.id) AS bookings
        FROM parking_lots l
        LEFT JOIN bookings b ON b.parking_lot_id = l.id
-       GROUP BY l.id ORDER BY bookings DESC`
+       GROUP BY l.id, l.name ORDER BY bookings DESC`
     );
-    const [[summary]] = await db.query(
-      `SELECT COALESCE(SUM(amount), 0) AS totalRevenue,
-              COUNT(*) AS totalBookings,
-              COUNT(DISTINCT user_id) AS activeUsers
+    const [[paymentSummary]] = await db.query(
+      `SELECT COALESCE(SUM(amount), 0) AS totalRevenue
        FROM payments WHERE status = 'completed'`
+    );
+    const [[bookingSummary]] = await db.query(
+      `SELECT COUNT(*) AS totalBookings FROM bookings`
+    );
+    const [[userSummary]] = await db.query(
+      `SELECT COUNT(*) AS activeUsers FROM users WHERE is_active = 1`
     );
 
     res.json({
       data: {
         summary: {
-          totalRevenue: Number(summary.totalRevenue) || 0,
-          totalBookings: Number(summary.totalBookings) || 0,
-          activeUsers: Number(summary.activeUsers) || 0,
+          totalRevenue: Number(paymentSummary.totalRevenue) || 0,
+          totalBookings: Number(bookingSummary.totalBookings) || 0,
+          activeUsers: Number(userSummary.activeUsers) || 0,
         },
         revenueByDay: revenueByDay.map((r) => ({
           date: r.date,

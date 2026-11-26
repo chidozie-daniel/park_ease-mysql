@@ -80,7 +80,7 @@ class _AdminBookingDetailsScreenState extends State<AdminBookingDetailsScreen> {
           }
           if (snapshot.hasError) {
             return Center(
-              child: Padding(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

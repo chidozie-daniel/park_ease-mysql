@@ -107,16 +107,25 @@ class _ManageBookingsScreenState extends State<ManageBookingsScreen> {
                         ),
                         title: Text(
                           booking['userName'] as String? ?? 'Customer',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                         subtitle: Text(
                           '${booking['lotName'] ?? 'Parking lot'}\n'
                           '${_date(booking['startTime'])}',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         isThreeLine: true,
-                        trailing: Chip(
-                          label: Text(
-                            _label(booking['status'] as String? ?? ''),
+                        trailing: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 96),
+                          child: Chip(
+                            label: Text(
+                              _label(booking['status'] as String? ?? ''),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ),
                       ),
@@ -131,7 +140,7 @@ class _ManageBookingsScreenState extends State<ManageBookingsScreen> {
 
   Widget _message(String text, {Widget? action}) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,

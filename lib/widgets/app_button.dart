@@ -24,49 +24,74 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: width ?? double.infinity,
-      height: height,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isSecondary
-              ? Colors.transparent
-              : (backgroundColor ?? const Color(0xFF9894BD)),
-          foregroundColor: foregroundColor ?? Colors.white,
-          elevation: isSecondary ? 0 : 2,
-          side: isSecondary
-              ? const BorderSide(color: Color(0xFF9894BD), width: 1.5)
-              : null,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+    final spinnerColor =
+        foregroundColor ??
+        (isSecondary ? const Color(0xFF9894BD) : Colors.white);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final buttonWidth =
+            width ??
+            (constraints.hasBoundedWidth ? constraints.maxWidth : null);
+        final labelWidget = Text(
+          label,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
           ),
-          padding: EdgeInsets.zero,
-        ).copyWith(
-          elevation: WidgetStateProperty.resolveWith<double>((states) {
-            if (isSecondary) return 0;
-            if (states.contains(WidgetState.pressed)) return 1;
-            return 2;
-          }),
-        ),
-        child: isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2.5,
+        );
+
+        return SizedBox(
+          width: buttonWidth,
+          height: height,
+          child: ElevatedButton(
+            onPressed: isLoading ? null : onPressed,
+            style:
+                ElevatedButton.styleFrom(
+                  backgroundColor: isSecondary
+                      ? Colors.transparent
+                      : (backgroundColor ?? const Color(0xFF9894BD)),
+                  foregroundColor:
+                      foregroundColor ??
+                      (isSecondary ? const Color(0xFF9894BD) : Colors.white),
+                  elevation: isSecondary ? 0 : 2,
+                  side: isSecondary
+                      ? const BorderSide(color: Color(0xFF9894BD), width: 1.5)
+                      : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  minimumSize: Size(0, height),
+                ).copyWith(
+                  elevation: WidgetStateProperty.resolveWith<double>((states) {
+                    if (isSecondary) return 0;
+                    if (states.contains(WidgetState.pressed)) return 1;
+                    return 2;
+                  }),
                 ),
-              )
-            : Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
-                ),
-              ),
-      ),
+            child: isLoading
+                ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: spinnerColor,
+                      strokeWidth: 2.5,
+                    ),
+                  )
+                : buttonWidth != null && buttonWidth.isFinite
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [Flexible(child: labelWidget)],
+                  )
+                : labelWidget,
+          ),
+        );
+      },
     );
   }
 }

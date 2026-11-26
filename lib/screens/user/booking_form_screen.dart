@@ -307,6 +307,8 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                 children: [
                   Text(
                     '${v.brand} ${v.model}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
@@ -314,6 +316,8 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                   ),
                   Text(
                     v.licensePlate,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Color(0xFF6B7280),
                       fontSize: 13,
@@ -370,11 +374,14 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
               color: Color(0xFF9894BD),
             ),
             const SizedBox(width: 12),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 15, color: Colors.black87),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 15, color: Colors.black87),
+              ),
             ),
-            const Spacer(),
             const Icon(Icons.chevron_right_rounded, color: Color(0xFF6B7280)),
           ],
         ),

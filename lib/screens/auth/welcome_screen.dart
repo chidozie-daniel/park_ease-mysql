@@ -14,14 +14,20 @@ class WelcomeScreen extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 412),
             child: LayoutBuilder(
               builder: (context, constraints) {
+                final heroTop = constraints.maxHeight * 0.368;
+                const reservedBottom = 158.0;
+                final heroHeight =
+                    (constraints.maxHeight - heroTop - reservedBottom)
+                        .clamp(0.0, constraints.maxHeight * 0.363)
+                        .toDouble();
                 return Stack(
                   children: [
                     Positioned(
                       left: 0,
-                      top: constraints.maxHeight * 0.368,
+                      top: heroTop,
                       child: Container(
                         width: constraints.maxWidth,
-                        height: constraints.maxHeight * 0.363,
+                        height: heroHeight,
                         decoration: BoxDecoration(
                           image: DecorationImage(
                             image: AssetImage('assets/images/login image.png'),

@@ -44,7 +44,11 @@ class _ManageParkingLotsScreenState extends State<ManageParkingLotsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete parking lot?'),
-        content: Text('Delete "${lot.name}" and its parking spaces?'),
+        content: Text(
+          'Delete "${lot.name}" and its parking spaces?',
+          maxLines: 4,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -134,12 +138,16 @@ class _ManageParkingLotsScreenState extends State<ManageParkingLotsScreen> {
                     ),
                     title: Text(
                       lot.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     subtitle: Text(
                       '${lot.availableSlots}/${lot.totalSlots} available · '
                       'Rs ${lot.hourlyRate.toStringAsFixed(2)}/hr · '
                       '${lot.status.label}\n${lot.address}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     isThreeLine: true,
                     onTap: () => _edit(lot),
@@ -165,7 +173,7 @@ class _ManageParkingLotsScreenState extends State<ManageParkingLotsScreen> {
 
   Widget _message(String text, {Widget? action}) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,

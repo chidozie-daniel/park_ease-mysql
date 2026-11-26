@@ -66,11 +66,7 @@ class _CurrentParkingScreenState extends State<CurrentParkingScreen> {
       }
     } catch (_) {}
 
-    return _SessionDetails(
-      booking: booking,
-      lot: lot,
-      slotNumber: slotNumber,
-    );
+    return _SessionDetails(booking: booking, lot: lot, slotNumber: slotNumber);
   }
 
   Future<void> _endParking(_SessionDetails details) async {
@@ -117,50 +113,71 @@ class _CurrentParkingScreenState extends State<CurrentParkingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            color: const Color(0xFFDEDCEC),
-            child: const Center(
-              child: Icon(Icons.map_rounded, size: 80, color: Color(0xFF9894BD)),
-            ),
-          ),
-          Positioned(
-            top: 50,
-            left: 20,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      body: LayoutBuilder(
+        builder: (context, stackConstraints) {
+          return Stack(
+            children: [
+              Container(
+                color: const Color(0xFFDEDCEC),
+                child: const Center(
+                  child: Icon(
+                    Icons.map_rounded,
+                    size: 80,
+                    color: Color(0xFF9894BD),
+                  ),
+                ),
               ),
-              child: FutureBuilder<_SessionDetails>(
-                future: _details,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const SizedBox(
-                      height: 320,
-                      child: Center(child: LoadingIndicator()),
-                    );
-                  }
-                  if (snapshot.hasError || !snapshot.hasData) {
-                    return _buildError(snapshot.error);
-                  }
-                  return _buildSession(snapshot.data!);
-                },
+              Positioned(
+                top: 50,
+                left: 20,
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: Colors.white,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ),
-            ),
-          ),
-        ],
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: stackConstraints.maxHeight * 0.75,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
+                    ),
+                    child: SingleChildScrollView(
+                      child: FutureBuilder<_SessionDetails>(
+                        future: _details,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const SizedBox(
+                              height: 320,
+                              child: Center(child: LoadingIndicator()),
+                            );
+                          }
+                          if (snapshot.hasError || !snapshot.hasData) {
+                            return _buildError(snapshot.error);
+                          }
+                          return _buildSession(snapshot.data!);
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -261,13 +278,14 @@ class _CurrentParkingScreenState extends State<CurrentParkingScreen> {
             children: [
               const Icon(Icons.qr_code_rounded, color: Color(0xFF126E63)),
               const SizedBox(width: 8),
-              Expanded(
-                child: SelectableText(
-                  'Exit code: ${booking.qrCode ?? 'Not available'}',
-                  maxLines: 2,
-                  style: const TextStyle(color: Colors.black87, fontSize: 13),
+                Expanded(
+                  child: Text(
+                    'Exit code: ${booking.qrCode ?? 'Not available'}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.black87, fontSize: 13),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -314,13 +332,17 @@ class _CurrentParkingScreenState extends State<CurrentParkingScreen> {
           label,
           style: const TextStyle(color: Color(0xFF6B7280), fontSize: 14),
         ),
-        const Spacer(),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+        Flexible(
+          child: Text(
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],

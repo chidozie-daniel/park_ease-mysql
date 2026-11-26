@@ -190,53 +190,76 @@ class _NavigateParkingScreenState extends State<NavigateParkingScreen> {
         ),
         SafeArea(
           top: false,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  lot.name,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 4),
-                Text(lot.address),
-                const SizedBox(height: 12),
-                const Text(
-                  'Turn-by-turn directions are provided by your installed maps app.',
-                  style: TextStyle(color: Colors.black54, fontSize: 12),
-                ),
-                const SizedBox(height: 12),
-                Row(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 240),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _copyDirections(lot),
-                        icon: const Icon(Icons.directions_rounded),
-                        label: const Text('Directions'),
+                    Text(
+                      lot.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _isLocating ? null : () => _locateMe(lot),
-                        icon: _isLocating
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.my_location_rounded),
-                        label: const Text('Show My Location'),
-                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                      lot.address,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Turn-by-turn directions are provided by your installed maps app.',
+                      style: TextStyle(color: Colors.black54, fontSize: 12),
+                    ),
+                    const SizedBox(height: 12),
+                    LayoutBuilder(
+                      builder: (context, buttonConstraints) {
+                        final copyDirectionsButton = OutlinedButton.icon(
+                          onPressed: () => _copyDirections(lot),
+                          icon: const Icon(Icons.directions_rounded),
+                          label: const Text('Directions'),
+                        );
+                        final locateButton = ElevatedButton.icon(
+                          onPressed: _isLocating ? null : () => _locateMe(lot),
+                          icon: _isLocating
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.my_location_rounded),
+                          label: const Text('Show My Location'),
+                        );
+                        if (buttonConstraints.maxWidth < 360) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              copyDirectionsButton,
+                              const SizedBox(height: 12),
+                              locateButton,
+                            ],
+                          );
+                        }
+                        return Row(
+                          children: [
+                            Expanded(child: copyDirectionsButton),
+                            const SizedBox(width: 12),
+                            Expanded(child: locateButton),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

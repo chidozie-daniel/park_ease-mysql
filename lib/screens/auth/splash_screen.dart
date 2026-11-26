@@ -59,80 +59,92 @@ class _SplashScreenState extends State<SplashScreen> {
           ),
         ),
         child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(
-                'assets/images/splash_logo.png',
-                width: 331,
-                height: 221,
-                fit: BoxFit.cover,
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'PARK EASE',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 40,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 4,
-                  shadows: [
-                    Shadow(
-                      offset: Offset(0, -1),
-                      blurRadius: 0,
-                      color: Colors.black,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FractionallySizedBox(
+                  widthFactor: 1,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 331),
+                    child: AspectRatio(
+                      aspectRatio: 331 / 221,
+                      child: Image.asset(
+                        'assets/images/splash_logo.png',
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                    Shadow(
-                      offset: Offset(0, 1),
-                      blurRadius: 0,
-                      color: Colors.black,
-                    ),
-                    Shadow(
-                      offset: Offset(-1, 0),
-                      blurRadius: 0,
-                      color: Colors.black,
-                    ),
-                    Shadow(
-                      offset: Offset(1, 0),
-                      blurRadius: 0,
-                      color: Colors.black,
-                    ),
-                    Shadow(
-                      offset: Offset(-1, -1),
-                      blurRadius: 0,
-                      color: Colors.black,
-                    ),
-                    Shadow(
-                      offset: Offset(1, 1),
-                      blurRadius: 0,
-                      color: Colors.black,
-                    ),
-                    Shadow(
-                      offset: Offset(-1, 1),
-                      blurRadius: 0,
-                      color: Colors.black,
-                    ),
-                    Shadow(
-                      offset: Offset(1, -1),
-                      blurRadius: 0,
-                      color: Colors.black,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'smart parking, effortless living',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.80,
+                const SizedBox(height: 24),
+                const Text(
+                  'PARK EASE',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 40,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 4,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(0, -1),
+                        blurRadius: 0,
+                        color: Colors.black,
+                      ),
+                      Shadow(
+                        offset: Offset(0, 1),
+                        blurRadius: 0,
+                        color: Colors.black,
+                      ),
+                      Shadow(
+                        offset: Offset(-1, 0),
+                        blurRadius: 0,
+                        color: Colors.black,
+                      ),
+                      Shadow(
+                        offset: Offset(1, 0),
+                        blurRadius: 0,
+                        color: Colors.black,
+                      ),
+                      Shadow(
+                        offset: Offset(-1, -1),
+                        blurRadius: 0,
+                        color: Colors.black,
+                      ),
+                      Shadow(
+                        offset: Offset(1, 1),
+                        blurRadius: 0,
+                        color: Colors.black,
+                      ),
+                      Shadow(
+                        offset: Offset(-1, 1),
+                        blurRadius: 0,
+                        color: Colors.black,
+                      ),
+                      Shadow(
+                        offset: Offset(1, -1),
+                        blurRadius: 0,
+                        color: Colors.black,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 40),
-              const LoadingIndicator(),
-            ],
+                const SizedBox(height: 8),
+                const Text(
+                  'smart parking, effortless living',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.80,
+                  ),
+                ),
+                const SizedBox(height: 40),
+                const LoadingIndicator(),
+              ],
+            ),
           ),
         ),
       ),

@@ -77,7 +77,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text('Booking ${widget.bookingId}'),
+                  Text(
+                    'Booking ${widget.bookingId}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),
@@ -135,6 +139,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   payment.transactionId == null
                       ? 'Transaction ID pending'
                       : 'Transaction ${payment.transactionId}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             )
@@ -186,6 +192,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   title: Text('Rs ${payment.amount.toStringAsFixed(2)}'),
                   subtitle: Text(
                     '${payment.method.label} · booking ${payment.bookingId}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   trailing: Text(payment.status.label),
                 ),

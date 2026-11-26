@@ -34,13 +34,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final auth = context.read<AuthService>();
     final email = _emailController.text.trim();
     try {
-      await auth.forgotPassword(email);
+      final result = await auth.forgotPassword(email);
+      final devOtp = result['devOtp'] as String?;
       if (mounted) {
         setState(() => _sent = true);
         Navigator.pushNamed(
           context,
           AppRoutes.otpVerification,
-          arguments: {'email': email, 'purpose': 'password_reset'},
+          arguments: {
+            'email': email,
+            'purpose': 'password_reset',
+            ...(devOtp != null ? {'devOtp': devOtp} : {}),
+          },
         );
       }
     } catch (e) {

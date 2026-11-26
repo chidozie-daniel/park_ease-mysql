@@ -67,34 +67,47 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                spacing: 12,
-                children: [
-                  _buildAction(
-                    context,
-                    'My Bookings',
-                    Icons.receipt_long_outlined,
-                    () => Navigator.pushNamed(context, AppRoutes.myBookings),
-                  ),
-                  _buildAction(
-                    context,
-                    'Find Parking',
-                    Icons.local_parking_outlined,
-                    () => Navigator.pushNamed(context, AppRoutes.searchParking),
-                  ),
-                  _buildAction(
-                    context,
-                    'Scan to Park',
-                    Icons.qr_code_scanner_outlined,
-                    () => Navigator.pushNamed(context, AppRoutes.scanToPark),
-                  ),
-                  _buildAction(
-                    context,
-                    'Offers',
-                    Icons.local_offer_outlined,
-                    () => _showOffers(context),
-                  ),
-                ],
+              LayoutBuilder(
+                builder: (context, quickActionConstraints) {
+                  final actions = <Widget>[
+                    _buildAction(
+                      context,
+                      'My Bookings',
+                      Icons.receipt_long_outlined,
+                      () => Navigator.pushNamed(context, AppRoutes.myBookings),
+                    ),
+                    _buildAction(
+                      context,
+                      'Find Parking',
+                      Icons.local_parking_outlined,
+                      () =>
+                          Navigator.pushNamed(context, AppRoutes.searchParking),
+                    ),
+                    _buildAction(
+                      context,
+                      'Scan to Park',
+                      Icons.qr_code_scanner_outlined,
+                      () => Navigator.pushNamed(context, AppRoutes.scanToPark),
+                    ),
+                    _buildAction(
+                      context,
+                      'Offers',
+                      Icons.local_offer_outlined,
+                      () => _showOffers(context),
+                    ),
+                  ];
+                  if (quickActionConstraints.maxWidth < 400) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(spacing: 12, children: [actions[0], actions[1]]),
+                        const SizedBox(height: 12),
+                        Row(spacing: 12, children: [actions[2], actions[3]]),
+                      ],
+                    );
+                  }
+                  return Row(spacing: 12, children: actions);
+                },
               ),
               const SizedBox(height: 24),
               Row(
@@ -254,8 +267,8 @@ class _HomeScreenState extends State<HomeScreen> {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
-          child: SizedBox(
-            height: 90,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 90),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

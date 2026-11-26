@@ -23,10 +23,16 @@ async function requireAuth(req, res, next) {
       throw new HttpError(401, 'Invalid or expired session');
     }
 
-    const [revoked] = await db.query(
-      `SELECT token_hash FROM revoked_tokens WHERE token_hash = ?`,
-      [hashToken(token)]
-    );
+    let revoked = [];
+    try {
+      [revoked] = await db.query(
+        `SELECT token_hash FROM revoked_tokens WHERE token_hash = ?`,
+        [hashToken(token)]
+      );
+    } catch (err) {
+      if (err.code !== 'ER_NO_SUCH_TABLE') throw err;
+      console.warn('revoked_tokens table missing; run npm run db:setup');
+    }
     if (revoked.length) {
       throw new HttpError(401, 'Invalid or expired session');
     }

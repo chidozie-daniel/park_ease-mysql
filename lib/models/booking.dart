@@ -41,7 +41,7 @@ class Booking {
   final String userId;
   final String parkingLotId;
   final String? parkingSlotId;
-  final String vehicleId;
+  final String? vehicleId;
   final DateTime startTime;
   final DateTime endTime;
   final double totalAmount;
@@ -56,7 +56,7 @@ class Booking {
     required this.userId,
     required this.parkingLotId,
     this.parkingSlotId,
-    required this.vehicleId,
+    this.vehicleId,
     required this.startTime,
     required this.endTime,
     required this.totalAmount,

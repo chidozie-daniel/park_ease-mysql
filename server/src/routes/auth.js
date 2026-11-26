@@ -90,7 +90,7 @@ router.post(
 
     const code = generateOtp();
     await createOtp(normalizedEmail, 'register', code);
-    await sendEmail(
+    const emailResult = await sendEmail(
       normalizedEmail,
       'Your Park Ease verification code',
       `<p>Your verification code is <b>${code}</b>. It expires in 15 minutes.</p>`
@@ -99,6 +99,7 @@ router.post(
     res.status(201).json({
       message: 'Registration successful. Verify your email to continue.',
       email: normalizedEmail,
+      ...(emailResult && emailResult.stub ? { devOtp: code } : {}),
     });
   })
 );
@@ -173,14 +174,18 @@ router.post(
     }
 
     if (!otp) {
+      const normalizedEmail = String(email).toLowerCase().trim();
       const code = generateOtp();
-      await createOtp(String(email).toLowerCase().trim(), 'register', code);
-      await sendEmail(
-        email,
+      await createOtp(normalizedEmail, 'register', code);
+      const emailResult = await sendEmail(
+        normalizedEmail,
         'Your Park Ease verification code',
         `<p>Your verification code is <b>${code}</b>. It expires in 15 minutes.</p>`
       );
-      return res.json({ message: 'OTP sent successfully' });
+      return res.json({
+        message: 'OTP sent successfully',
+        ...(emailResult && emailResult.stub ? { devOtp: code } : {}),
+      });
     }
 
     const normalizedEmail = String(email).toLowerCase().trim();
@@ -220,13 +225,16 @@ router.post(
 
     const code = generateOtp();
     await createOtp(normalizedEmail, 'password_reset', code);
-    await sendEmail(
+    const emailResult = await sendEmail(
       normalizedEmail,
       'Your Park Ease password reset code',
       `<p>Your password reset code is <b>${code}</b>. It expires in 15 minutes.</p>`
     );
 
-    res.json({ message: 'Password reset code sent to your email' });
+    res.json({
+      message: 'Password reset code sent to your email',
+      ...(emailResult && emailResult.stub ? { devOtp: code } : {}),
+    });
   })
 );
 

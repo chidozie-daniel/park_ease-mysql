@@ -601,11 +601,15 @@ class _LotCard extends StatelessWidget {
                     ),
                   ),
                   if (distance.isNotEmpty)
-                    Text(
-                      distance,
-                      style: const TextStyle(
-                        color: Color(0xFF6B7280),
-                        fontSize: 13,
+                    Flexible(
+                      child: Text(
+                        distance,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF6B7280),
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                 ],
@@ -630,29 +634,38 @@ class _LotCard extends StatelessWidget {
                         : Colors.redAccent,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    lot.isBookable
-                        ? '${lot.availableSlots} of ${lot.totalSlots} spots'
-                        : 'Availability not listed',
-                    style: TextStyle(
-                      color: !lot.isBookable
-                          ? Colors.blueGrey
-                          : lot.availableSlots > 0
-                          ? const Color(0xFF126E63)
-                          : Colors.redAccent,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                  Flexible(
+                    child: Text(
+                      lot.isBookable
+                          ? '${lot.availableSlots} of ${lot.totalSlots} spots'
+                          : 'Availability not listed',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: !lot.isBookable
+                            ? Colors.blueGrey
+                            : lot.availableSlots > 0
+                            ? const Color(0xFF126E63)
+                            : Colors.redAccent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                  const Spacer(),
-                  Text(
-                    lot.isBookable
-                        ? '${AppHelpers.formatPrice(lot.hourlyRate)}/hr'
-                        : 'Rate not listed',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      lot.isBookable
+                          ? '${AppHelpers.formatPrice(lot.hourlyRate)}/hr'
+                          : 'Rate not listed',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],

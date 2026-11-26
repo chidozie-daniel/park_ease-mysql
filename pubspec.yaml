@@ -25,6 +25,7 @@ dependencies:
   latlong2: ^0.10.1
 
   material_ui: any
+  mobile_scanner: ^7.5.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
