@@ -8,7 +8,14 @@ import '../../utils/utils.dart';
 import '../../widgets/loading_indicator.dart';
 
 class MyBookingsScreen extends StatefulWidget {
-  const MyBookingsScreen({super.key});
+  final int initialTab;
+  final String title;
+
+  const MyBookingsScreen({
+    super.key,
+    this.initialTab = 0,
+    this.title = 'My Bookings',
+  });
 
   @override
   State<MyBookingsScreen> createState() => _MyBookingsScreenState();
@@ -126,9 +133,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 3,
+      initialIndex: widget.initialTab.clamp(0, 2),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('My Bookings'),
+          title: Text(widget.title),
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Active'),

@@ -11,6 +11,11 @@ class AdminService {
     return response['data'] as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> getReports() async {
+    final response = await _api.get(ApiConfig.adminReports);
+    return response['data'] as Map<String, dynamic>;
+  }
+
   Future<List<User>> getUsers() async {
     final response = await _api.get(ApiConfig.adminUsers);
     final rows = response['data'] as List<dynamic>? ?? const [];

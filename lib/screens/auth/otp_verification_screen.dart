@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -9,8 +11,13 @@ import '../../widgets/app_button.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
+  final String purpose;
 
-  const OtpVerificationScreen({super.key, required this.email});
+  const OtpVerificationScreen({
+    super.key,
+    required this.email,
+    this.purpose = 'register',
+  });
 
   @override
   State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
@@ -22,9 +29,22 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final _focusNodes = List.generate(6, (_) => FocusNode());
   bool _isLoading = false;
   int _resendTimer = 60;
+  Timer? _resendCountdown;
+
+  @override
+  void initState() {
+    super.initState();
+    _resendCountdown = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {
+        if (_resendTimer > 0) _resendTimer--;
+      });
+    });
+  }
 
   @override
   void dispose() {
+    _resendCountdown?.cancel();
     for (final c in _otpController) {
       c.dispose();
     }
@@ -48,13 +68,28 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       return;
     }
 
+    if (widget.purpose == 'password_reset') {
+      if (mounted) {
+        Navigator.pushReplacementNamed(
+          context,
+          AppRoutes.resetPassword,
+          arguments: {'email': widget.email, 'otp': _otp},
+        );
+      }
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     final auth = context.read<AuthService>();
     try {
       await auth.verifyOtp(widget.email, _otp);
       if (mounted) {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.home,
+          (route) => false,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -73,18 +108,29 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
   }
 
-  void _resend() {
-    if (_resendTimer > 0) return;
-
-    final auth = context.read<AuthService>();
-    auth.sendOtp(widget.email).catchError((_) => <String, dynamic>{});
-
-    setState(() => _resendTimer = 60);
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        setState(() => _resendTimer--);
+  Future<void> _sendCode({required bool showError}) async {
+    try {
+      await context.read<AuthService>().sendOtp(
+        widget.email,
+        purpose: widget.purpose,
+      );
+    } catch (e) {
+      if (showError && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ApiService.describeError(e)),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+          ),
+        );
       }
-    });
+    }
+  }
+
+  Future<void> _resend() async {
+    if (_resendTimer > 0) return;
+    setState(() => _resendTimer = 60);
+    await _sendCode(showError: true);
   }
 
   void _onChanged(int index, String value) {

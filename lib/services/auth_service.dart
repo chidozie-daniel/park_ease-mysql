@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -32,6 +31,25 @@ class AuthService {
       try {
         _currentUser = User.fromJson(_decodeJson(userJson));
       } catch (_) {}
+    }
+    if (_token != null) {
+      await _validateCachedSession();
+    }
+  }
+
+  Future<void> _validateCachedSession() async {
+    try {
+      final response = await _api.get(ApiConfig.authMe);
+      final userData = response['user'];
+      if (userData is Map<String, dynamic>) {
+        await _saveUser(User.fromJson(userData));
+      }
+    } on ApiException catch (error) {
+      if (error.statusCode == 401 || error.statusCode == 403) {
+        await _clearAuth();
+      }
+    } catch (error) {
+      debugPrint('Could not validate cached session: $error');
     }
   }
 
@@ -67,21 +85,38 @@ class AuthService {
     return response;
   }
 
+  Future<Map<String, dynamic>> loginAdmin(
+    String email,
+    String password,
+  ) async {
+    final response = await _api.post(ApiConfig.authLogin, {
+      'email': email.trim(),
+      'password': password,
+    }, requireAuth: false);
+
+    final userData = response['user'];
+    final role = userData is Map<String, dynamic> ? userData['role'] : null;
+    if (role != 'admin') {
+      await _clearAuth();
+      throw ApiException('Access denied. Admin credentials required.', 403);
+    }
+
+    await _saveSession(response);
+    return response;
+  }
+
   Future<Map<String, dynamic>> register(
     String name,
     String email,
     String phone,
     String password,
   ) async {
-    final response = await _api.post(ApiConfig.authRegister, {
+    return await _api.post(ApiConfig.authRegister, {
       'name': name,
       'email': email,
       'phone': phone,
       'password': password,
     }, requireAuth: false);
-
-    await _saveSession(response);
-    return response;
   }
 
   Future<void> _saveSession(Map<String, dynamic> response) async {
@@ -102,32 +137,36 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    final logoutRequest = _api.post(ApiConfig.authLogout, {});
-    await _clearAuth();
-    unawaited(_completeServerLogout(logoutRequest));
-  }
-
-  Future<void> _completeServerLogout(
-    Future<Map<String, dynamic>> logoutRequest,
-  ) async {
     try {
-      await logoutRequest;
+      await _api.post(ApiConfig.authLogout, {});
     } catch (error) {
-      debugPrint('Server logout failed after local logout: $error');
+      debugPrint('Server logout failed: $error');
+    } finally {
+      await _clearAuth();
     }
   }
 
-  Future<Map<String, dynamic>> sendOtp(String email) async {
+  Future<Map<String, dynamic>> sendOtp(
+    String email, {
+    String purpose = 'register',
+  }) async {
+    if (purpose == 'password_reset') {
+      return forgotPassword(email);
+    }
     return await _api.post(ApiConfig.authOtp, {
       'email': email,
     }, requireAuth: false);
   }
 
   Future<Map<String, dynamic>> verifyOtp(String email, String otp) async {
-    return await _api.post(ApiConfig.authOtp, {
+    final response = await _api.post(ApiConfig.authOtp, {
       'email': email,
       'otp': otp,
     }, requireAuth: false);
+    if (response['token'] != null && response['user'] != null) {
+      await _saveSession(response);
+    }
+    return response;
   }
 
   Future<Map<String, dynamic>> forgotPassword(String email) async {

@@ -149,7 +149,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
           ),
         ),
         const SizedBox(height: 20),
-        if (isActive)
+        if (isActive) ...[
           AppButton(
             label: 'Navigate to Parking',
             onPressed: () => Navigator.pushNamed(
@@ -158,6 +158,17 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
               arguments: {'parkingLotId': booking.parkingLotId},
             ),
           ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.pushNamed(
+              context,
+              AppRoutes.currentParking,
+              arguments: {'bookingId': booking.id},
+            ),
+            icon: const Icon(Icons.timer_outlined),
+            label: const Text('View Current Session'),
+          ),
+        ],
         if (booking.status == BookingStatus.pending ||
             booking.status == BookingStatus.confirmed) ...[
           AppButton(

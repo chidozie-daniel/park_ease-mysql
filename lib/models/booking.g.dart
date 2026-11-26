@@ -45,8 +45,8 @@ Map<String, dynamic> _$BookingToJson(Booking instance) => <String, dynamic>{
 const _$BookingStatusEnumMap = {
   BookingStatus.pending: 'pending',
   BookingStatus.confirmed: 'confirmed',
-  BookingStatus.checkedIn: 'checkedIn',
-  BookingStatus.checkedOut: 'checkedOut',
+  BookingStatus.checkedIn: 'checked_in',
+  BookingStatus.checkedOut: 'checked_out',
   BookingStatus.cancelled: 'cancelled',
-  BookingStatus.noShow: 'noShow',
+  BookingStatus.noShow: 'no_show',
 };

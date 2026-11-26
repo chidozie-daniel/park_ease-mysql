@@ -86,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     context,
                     'Scan to Park',
                     Icons.qr_code_scanner_outlined,
-                    () => Navigator.pushNamed(context, AppRoutes.myBookings),
+                    () => Navigator.pushNamed(context, AppRoutes.scanToPark),
                   ),
                   _buildAction(
                     context,

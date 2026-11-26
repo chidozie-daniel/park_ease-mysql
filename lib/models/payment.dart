@@ -1,6 +1,25 @@
+import 'dart:convert';
+
 import 'package:json_annotation/json_annotation.dart';
 
 part 'payment.g.dart';
+
+Map<String, dynamic>? _gatewayResponseFromJson(Object? value) {
+  if (value == null) return null;
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return Map<String, dynamic>.from(value);
+  if (value is String) {
+    try {
+      final decoded = jsonDecode(value);
+      if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    } catch (_) {}
+    return <String, dynamic>{'message': value};
+  }
+  return <String, dynamic>{'value': value.toString()};
+}
+
+Map<String, dynamic>? _gatewayResponseToJson(Map<String, dynamic>? value) =>
+    value;
 
 enum PaymentMethod {
   @JsonValue('credit_card')
@@ -58,9 +77,11 @@ class Payment {
   final double amount;
   final PaymentMethod method;
   final PaymentStatus status;
-  final String transactionId;
-  final DateTime paidAt;
-  final String? gatewayResponse;
+  final String? transactionId;
+  final DateTime? paidAt;
+
+  @JsonKey(fromJson: _gatewayResponseFromJson, toJson: _gatewayResponseToJson)
+  final Map<String, dynamic>? gatewayResponse;
 
   const Payment({
     required this.id,
@@ -69,8 +90,8 @@ class Payment {
     required this.amount,
     required this.method,
     required this.status,
-    required this.transactionId,
-    required this.paidAt,
+    this.transactionId,
+    this.paidAt,
     this.gatewayResponse,
   });
 

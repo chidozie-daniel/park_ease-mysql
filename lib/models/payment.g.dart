@@ -13,9 +13,11 @@ Payment _$PaymentFromJson(Map<String, dynamic> json) => Payment(
   amount: (json['amount'] as num).toDouble(),
   method: $enumDecode(_$PaymentMethodEnumMap, json['method']),
   status: $enumDecode(_$PaymentStatusEnumMap, json['status']),
-  transactionId: json['transactionId'] as String,
-  paidAt: DateTime.parse(json['paidAt'] as String),
-  gatewayResponse: json['gatewayResponse'] as String?,
+  transactionId: json['transactionId'] as String?,
+  paidAt: json['paidAt'] == null
+      ? null
+      : DateTime.parse(json['paidAt'] as String),
+  gatewayResponse: _gatewayResponseFromJson(json['gatewayResponse']),
 );
 
 Map<String, dynamic> _$PaymentToJson(Payment instance) => <String, dynamic>{
@@ -26,8 +28,8 @@ Map<String, dynamic> _$PaymentToJson(Payment instance) => <String, dynamic>{
   'method': _$PaymentMethodEnumMap[instance.method]!,
   'status': _$PaymentStatusEnumMap[instance.status]!,
   'transactionId': instance.transactionId,
-  'paidAt': instance.paidAt.toIso8601String(),
-  'gatewayResponse': instance.gatewayResponse,
+  'paidAt': instance.paidAt?.toIso8601String(),
+  'gatewayResponse': _gatewayResponseToJson(instance.gatewayResponse),
 };
 
 const _$PaymentMethodEnumMap = {

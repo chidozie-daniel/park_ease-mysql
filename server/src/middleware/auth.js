@@ -1,7 +1,12 @@
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 
 const db = require('../db');
 const { HttpError } = require('../errors');
+
+function hashToken(token) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
 
 async function requireAuth(req, res, next) {
   try {
@@ -15,6 +20,14 @@ async function requireAuth(req, res, next) {
     try {
       payload = jwt.verify(token, process.env.JWT_SECRET);
     } catch (e) {
+      throw new HttpError(401, 'Invalid or expired session');
+    }
+
+    const [revoked] = await db.query(
+      `SELECT token_hash FROM revoked_tokens WHERE token_hash = ?`,
+      [hashToken(token)]
+    );
+    if (revoked.length) {
       throw new HttpError(401, 'Invalid or expired session');
     }
 
@@ -36,4 +49,4 @@ async function requireAuth(req, res, next) {
   }
 }
 
-module.exports = { requireAuth };
+module.exports = { requireAuth, hashToken };

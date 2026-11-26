@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 
 const db = require('../db');
 const { HttpError } = require('../errors');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, hashToken } = require('../middleware/auth');
 const { camelizeKeys } = require('../utils/camelize');
 const { sendEmail } = require('../utils/email');
 const { uuid, generateOtp, wrap } = require('../utils/helpers');
@@ -88,13 +88,18 @@ router.post(
       [uuid(), userRow.id, 'Explore parking spots near you and book instantly.']
     );
 
-    const [created] = await db.query(
-      `SELECT ${USER_FIELDS} FROM users WHERE id = ?`,
-      [userRow.id]
+    const code = generateOtp();
+    await createOtp(normalizedEmail, 'register', code);
+    await sendEmail(
+      normalizedEmail,
+      'Your Park Ease verification code',
+      `<p>Your verification code is <b>${code}</b>. It expires in 15 minutes.</p>`
     );
-    const user = camelizeKeys(created[0]);
 
-    res.status(201).json({ token: signToken(created[0]), user });
+    res.status(201).json({
+      message: 'Registration successful. Verify your email to continue.',
+      email: normalizedEmail,
+    });
   })
 );
 
@@ -128,10 +133,33 @@ router.post(
   })
 );
 
+router.get(
+  '/me',
+  requireAuth,
+  wrap(async (req, res) => {
+    const [rows] = await db.query(`SELECT ${USER_FIELDS} FROM users WHERE id = ?`, [
+      req.user.id,
+    ]);
+    if (!rows.length || !rows[0].is_active) {
+      throw new HttpError(401, 'Invalid or expired session');
+    }
+    res.json({ user: camelizeKeys(rows[0]) });
+  })
+);
+
 router.post(
   '/logout',
   requireAuth,
   wrap(async (req, res) => {
+    const payload = jwt.decode(req.token);
+    const expiresAt = payload && payload.exp
+      ? new Date(payload.exp * 1000)
+      : null;
+    await db.query(
+      `INSERT IGNORE INTO revoked_tokens (token_hash, user_id, expires_at)
+       VALUES (?, ?, ?)`,
+      [hashToken(req.token), req.user.id, expiresAt]
+    );
     res.json({ message: 'Logged out successfully' });
   })
 );
@@ -155,11 +183,24 @@ router.post(
       return res.json({ message: 'OTP sent successfully' });
     }
 
-    const valid = await isValidOtp(String(email).toLowerCase().trim(), 'register', otp);
+    const normalizedEmail = String(email).toLowerCase().trim();
+    const valid = await isValidOtp(normalizedEmail, 'register', otp);
     if (!valid) {
       throw new HttpError(400, 'Invalid or expired OTP');
     }
-    res.json({ message: 'OTP verified successfully' });
+
+    const [users] = await db.query(
+      `SELECT ${USER_FIELDS} FROM users WHERE email = ?`,
+      [normalizedEmail]
+    );
+    if (!users.length || !users[0].is_active) {
+      throw new HttpError(401, 'Invalid or expired session');
+    }
+    res.json({
+      message: 'OTP verified successfully',
+      token: signToken(users[0]),
+      user: camelizeKeys(users[0]),
+    });
   })
 );
 

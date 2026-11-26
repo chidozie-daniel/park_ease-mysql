@@ -1,7 +1,20 @@
 import 'package:json_annotation/json_annotation.dart';
 part 'booking.g.dart';
 
-enum BookingStatus { pending, confirmed, checkedIn, checkedOut, cancelled, noShow }
+enum BookingStatus {
+  @JsonValue('pending')
+  pending,
+  @JsonValue('confirmed')
+  confirmed,
+  @JsonValue('checked_in')
+  checkedIn,
+  @JsonValue('checked_out')
+  checkedOut,
+  @JsonValue('cancelled')
+  cancelled,
+  @JsonValue('no_show')
+  noShow,
+}
 
 extension BookingStatusExtension on BookingStatus {
   String get label {

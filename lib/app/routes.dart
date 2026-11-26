@@ -19,6 +19,7 @@ import '../screens/user/booking_details_screen.dart';
 import '../screens/user/my_bookings_screen.dart';
 import '../screens/user/current_parking_screen.dart';
 import '../screens/user/booking_history_screen.dart';
+import '../screens/user/scan_to_park_screen.dart';
 import '../screens/user/profile_screen.dart';
 import '../screens/user/edit_profile_screen.dart';
 import '../screens/user/my_vehicles_screen.dart';
@@ -57,6 +58,7 @@ abstract final class AppRoutes {
   static const myBookings = '/my-bookings';
   static const currentParking = '/current-parking';
   static const bookingHistory = '/booking-history';
+  static const scanToPark = '/scan-to-park';
   static const profile = '/profile';
   static const editProfile = '/edit-profile';
   static const myVehicles = '/my-vehicles';
@@ -88,6 +90,7 @@ abstract final class AppRoutes {
         final args = settings.arguments as Map<String, dynamic>?;
         return _route(OtpVerificationScreen(
           email: args?['email'] ?? '',
+          purpose: args?['purpose'] ?? 'register',
         ));
       case forgotPassword:
         return _route(const ForgotPasswordScreen());
@@ -148,6 +151,8 @@ abstract final class AppRoutes {
         ));
       case bookingHistory:
         return _route(const BookingHistoryScreen());
+      case scanToPark:
+        return _route(const ScanToParkScreen());
       case profile:
         return _route(const ProfileScreen());
       case editProfile:

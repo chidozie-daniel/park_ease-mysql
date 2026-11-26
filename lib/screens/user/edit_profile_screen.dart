@@ -175,8 +175,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               width: 1,
             ),
           ),
-          child: TextField(
+          child: TextFormField(
             controller: controller,
+            validator: validator,
             enabled: enabled,
             style: const TextStyle(
               color: Colors.black87,

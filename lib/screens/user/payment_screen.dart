@@ -131,7 +131,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       : Icons.hourglass_top_rounded,
                 ),
                 title: Text('Payment ${payment.status.label.toLowerCase()}'),
-                subtitle: Text('Transaction ${payment.transactionId}'),
+                subtitle: Text(
+                  payment.transactionId == null
+                      ? 'Transaction ID pending'
+                      : 'Transaction ${payment.transactionId}',
+                ),
               ),
             )
           else

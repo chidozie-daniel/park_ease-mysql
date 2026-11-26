@@ -1,8 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
+import '../../app/routes.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
+import '../../utils/validators.dart';
 import '../../widgets/app_button.dart';
 
 class AdminLoginScreen extends StatefulWidget {
@@ -33,19 +35,12 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
     final auth = context.read<AuthService>();
     try {
-      await auth.login(_emailController.text, _passwordController.text);
+      await auth.loginAdmin(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
       if (mounted) {
-        if (auth.isAdmin) {
-          Navigator.pushReplacementNamed(context, '/admin-dashboard');
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Access denied. Admin credentials required.'),
-              behavior: SnackBarBehavior.floating,
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        Navigator.pushReplacementNamed(context, AppRoutes.adminDashboard);
       }
     } catch (e) {
       if (mounted) {
@@ -108,12 +103,14 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   _buildField(
                     label: 'Email',
                     controller: _emailController,
+                    validator: AppValidators.email,
                     prefixIcon: const Icon(Icons.email_outlined, size: 20),
                   ),
                   const SizedBox(height: 20),
                   _buildField(
                     label: 'Password',
                     controller: _passwordController,
+                    validator: AppValidators.password,
                     obscureText: _obscurePassword,
                     prefixIcon: const Icon(Icons.lock_outlined, size: 20),
                     suffixIcon: IconButton(
@@ -145,6 +142,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   Widget _buildField({
     required String label,
     required TextEditingController controller,
+    required String? Function(String?)? validator,
     bool obscureText = false,
     Widget? prefixIcon,
     Widget? suffixIcon,
@@ -170,8 +168,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
               width: 1,
             ),
           ),
-          child: TextField(
+          child: TextFormField(
             controller: controller,
+            validator: validator,
             obscureText: obscureText,
             obscuringCharacter: '•',
             style: const TextStyle(

@@ -191,8 +191,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               width: 1,
             ),
           ),
-          child: TextField(
+          child: TextFormField(
             controller: controller,
+            validator: validator,
             obscureText: obscureText,
             obscuringCharacter: '•',
             style: const TextStyle(

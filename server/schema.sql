@@ -133,3 +133,11 @@ CREATE TABLE IF NOT EXISTS otps (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_otps_email (email)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS revoked_tokens (
+  token_hash CHAR(64) PRIMARY KEY,
+  user_id    CHAR(36) NULL,
+  revoked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at DATETIME NULL,
+  INDEX idx_revoked_tokens_user (user_id)
+) ENGINE=InnoDB;

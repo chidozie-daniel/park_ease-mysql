@@ -28,9 +28,7 @@ ParkingLot _$ParkingLotFromJson(Map<String, dynamic> json) => ParkingLot(
   isActive: json['isActive'] as bool? ?? true,
   isBookable: json['isBookable'] as bool? ?? true,
   source: json['source'] as String? ?? 'app',
-  createdAt: json['createdAt'] == null
-      ? DateTime.fromMillisecondsSinceEpoch(0)
-      : DateTime.parse(json['createdAt'] as String),
+  createdAt: DateTime.parse(json['createdAt'] as String),
   updatedAt: json['updatedAt'] == null
       ? null
       : DateTime.parse(json['updatedAt'] as String),

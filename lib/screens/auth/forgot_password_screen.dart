@@ -1,8 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
+import '../../app/routes.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
+import '../../utils/validators.dart';
 import '../../widgets/app_button.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -30,10 +32,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _isLoading = true);
 
     final auth = context.read<AuthService>();
+    final email = _emailController.text.trim();
     try {
-      await auth.forgotPassword(_emailController.text.trim());
+      await auth.forgotPassword(email);
       if (mounted) {
         setState(() => _sent = true);
+        Navigator.pushNamed(
+          context,
+          AppRoutes.otpVerification,
+          arguments: {'email': email, 'purpose': 'password_reset'},
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -109,8 +117,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             width: 1,
                           ),
                         ),
-                        child: TextField(
+                        child: TextFormField(
                           controller: _emailController,
+                          validator: AppValidators.email,
                           autofillHints: const [AutofillHints.email],
                           style: const TextStyle(
                             color: Colors.black87,
